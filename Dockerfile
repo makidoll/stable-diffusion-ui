@@ -1,11 +1,12 @@
-FROM npm:lts AS frontend
+FROM node:lts AS frontend
 WORKDIR /app/
-COPY . ./
-RUN yarn build
+COPY . /app/
+RUN yarn && yarn build
 
 FROM nvidia/cuda:11.6.2-cudnn8-runtime-ubuntu20.04
-WORKDIR /app
-COPY server.py requirements.txt ./
-COPY --from=frontend /app/dist ./
+WORKDIR /app/
+RUN apt-get update -y && apt-get install -y python3-pip
+COPY server.py requirements.txt /app/
 RUN pip install -r requirements.txt
-CMD python server.py
+COPY --from=frontend /app/dist/ /app/dist/
+CMD python3 server.py
