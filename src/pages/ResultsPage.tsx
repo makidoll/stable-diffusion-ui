@@ -15,13 +15,13 @@ export default function ResultsPage(props: {
 	return (
 		<Center h="100%" flexDirection="column">
 			<PromptBox prompt={props.result.prompt} />
-			<HStack mt={2}>
+			<HStack mt={4}>
 				<Badge colorScheme={"blue"}>
 					{formatRelative(new Date(props.result.created), new Date())}
 				</Badge>
-				<Badge colorScheme={"orange"}>seed: {props.result.seed}</Badge>
+				<Badge colorScheme={"orange"}>Seed: {props.result.seed}</Badge>
 			</HStack>
-			<SimpleGrid columns={3} spacing={4} padding={4} mt={2}>
+			<SimpleGrid columns={3} spacing={4} padding={4} mt={1}>
 				{images.map((src, i) => (
 					<ImageResult
 						key={i}
