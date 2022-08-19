@@ -18,12 +18,14 @@ import { Field, Form, Formik } from "formik";
 import { FaCookieBite } from "react-icons/fa";
 import { MdBrush } from "react-icons/md";
 import { Prompt } from "../../utils/Prompt";
+import { useResultsStore } from "../state/Results";
 
 export default function PromptPage(props: {
-	promptValues?: Prompt;
-	picturesGenerated: number;
+	initialPromptValues?: Prompt;
 	onPrompt?: (prompt: string, seed: number) => any;
 }) {
+	const results = useResultsStore();
+
 	const onSubmit = async ({ prompt, seed }: Prompt) => {
 		if (props.onPrompt) props.onPrompt(prompt, seed);
 	};
@@ -35,7 +37,7 @@ export default function PromptPage(props: {
 	const formik = (
 		<Formik
 			initialValues={
-				props.promptValues ?? {
+				props.initialPromptValues ?? {
 					prompt: "",
 					seed: -1,
 				}
@@ -105,8 +107,8 @@ export default function PromptPage(props: {
 						</HStack>
 
 						<Text opacity={0.5} m={2}>
-							{`${props.picturesGenerated} ${
-								props.picturesGenerated == 1
+							{`${results.results.length} ${
+								results.results.length == 1
 									? "picture"
 									: "pictures"
 							} generated`}

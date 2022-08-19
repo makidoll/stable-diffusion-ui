@@ -1,9 +1,9 @@
-import { Box, Heading, Image, SimpleGrid, Text } from "@chakra-ui/react";
-import { getResultImageUrls } from "../utils/getResultImageUrls";
+import { Box, Heading, Image, Text } from "@chakra-ui/react";
 import { Result } from "../interfaces/Result";
+import { useResultsStore } from "../state/Results";
 
 function PreviousResults(props: { result: Result; onClick?: () => any }) {
-	const images = getResultImageUrls(props.result);
+	// const images = getResultImageUrls(props.result);
 
 	return (
 		<Box cursor={"pointer"} onClick={props.onClick}>
@@ -25,13 +25,13 @@ function PreviousResults(props: { result: Result; onClick?: () => any }) {
 }
 
 export default function SidebarPage(props: {
-	allResults: Result[];
 	onSidebarResultClick: (result: Result) => any;
 }) {
+	const results = useResultsStore();
 	return (
 		<Box padding={4}>
 			<Heading size={"md"}>Last prompts</Heading>
-			{props.allResults.map(result => (
+			{results.results.map(result => (
 				<PreviousResults
 					key={result.id}
 					result={result}

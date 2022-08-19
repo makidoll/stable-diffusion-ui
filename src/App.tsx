@@ -6,23 +6,20 @@ import LoadingPage from "./pages/LoadingPage";
 import PromptPage from "./pages/PromptPage";
 import ResultsPage from "./pages/ResultsPage";
 import SidebarPage from "./pages/SidebarPage";
+import { useResultsStore } from "./state/Results";
 
 export default function App() {
-	const [promptValues, setPromptValues] = useState<Prompt>(null);
+	const [initialPromptValues, setInitialPromptValues] =
+		useState<Prompt>(null);
+
 	const [loadingPrompt, setLoadingPrompt] = useState("");
 
 	const [result, setResult] = useState<Result>(null);
 
-	const [allResults, setAllResults] = useState<Result[]>([]);
-
-	const refreshAllResults = async () => {
-		const req = await fetch("/api/results");
-		const results = await req.json();
-		setAllResults(results);
-	};
+	const refreshResults = useResultsStore(state => state.refresh);
 
 	useEffect(() => {
-		refreshAllResults();
+		refreshResults();
 	}, []);
 
 	const onPrompt = async (prompt: string, seed: number) => {
@@ -42,12 +39,12 @@ export default function App() {
 			setResult(result);
 			setLoadingPrompt("");
 
-			refreshAllResults();
+			refreshResults();
 		}, 1000 * 2);
 	};
 
 	const onStartOver = (reproduceResult?: Result) => {
-		setPromptValues(
+		setInitialPromptValues(
 			reproduceResult
 				? {
 						prompt: reproduceResult.prompt,
@@ -78,8 +75,7 @@ export default function App() {
 						<LoadingPage prompt={loadingPrompt} />
 					) : (
 						<PromptPage
-							promptValues={promptValues}
-							picturesGenerated={allResults.length}
+							initialPromptValues={initialPromptValues}
 							onPrompt={onPrompt}
 						/>
 					)}
@@ -95,7 +91,6 @@ export default function App() {
 						// shadow={"xl"}
 					>
 						<SidebarPage
-							allResults={allResults}
 							onSidebarResultClick={onSidebarResultClick}
 						/>
 					</Box>
