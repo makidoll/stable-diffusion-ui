@@ -1,17 +1,10 @@
-import {
-	Badge,
-	Button,
-	Center,
-	HStack,
-	SimpleGrid,
-	Text,
-} from "@chakra-ui/react";
-import { format, formatDistance, formatRelative } from "date-fns";
+import { Badge, Button, Center, HStack, SimpleGrid } from "@chakra-ui/react";
+import { formatRelative } from "date-fns";
 import { MdOutbox, MdRefresh } from "react-icons/md";
-import { getResultImageUrls } from "../../utils/GetResultImageUrls";
-import { Result } from "../../utils/Result";
-import { ImageResult } from "../ui/ImageResult";
+import { getResultImageUrls } from "../utils/getResultImageUrls";
+import { Result } from "../interfaces/Result";
 import PromptBox from "../ui/PromptBox";
+import ImageResult from "../ui/ImageResult";
 
 export default function ResultsPage(props: {
 	result: Result;

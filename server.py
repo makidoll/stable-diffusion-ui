@@ -1,21 +1,21 @@
 import datetime
 import os
 import random
-import sys
 from pathlib import Path
 from urllib import request
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
 
-app = Flask(__name__)
+data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
 
-dataPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+app = Flask(__name__, static_folder=frontend_path, static_url_path="/")
 
-Path(dataPath).mkdir(parents=True, exist_ok=True)
+Path(data_path).mkdir(parents=True, exist_ok=True)
 
-db = TinyDB(os.path.join(dataPath, "db.json"))
+db = TinyDB(os.path.join(data_path, "db.json"))
 
 # --
 
@@ -33,12 +33,12 @@ def fakeImage(i, prompt):
 	imgDraw.text((10, 25), "output " + str(i), fill=(255, 255, 255))
 	return img
 
-# web server
+# web server api
 
 @app.route("/api/generate", methods=["POST"])
 def generate():
 	prompt = request.json["prompt"]
-	seed = request.json["seed"]
+	seed = int(request.json["seed"])
 
 	if seed == -1:
 		seed = random.randint(0, 9007199254740991)
@@ -64,8 +64,8 @@ def generate():
 
 	for v in range(0, len(images)):
 		filename = "id" + str(id) + "_v" + str(v) + ".png"
-		savePath = os.path.join(dataPath, filename)
-		images[v].save(savePath)
+		save_path = os.path.join(data_path, filename)
+		images[v].save(save_path)
 
 	return jsonify(data)
 
@@ -76,6 +76,19 @@ def results():
 		results[i]["id"] = i + 1
 	results.reverse()
 	return jsonify(results)
+
+@app.route("/api/image/<path:path>")
+def send_report(path):
+	return send_from_directory(data_path, path)
+
+# web server frontend
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def catch_all(path):
+	return app.send_static_file("index.html")
+
+# dont run flask cli
 
 if __name__ == "__main__":
 	app.run(debug=False, port=5000)

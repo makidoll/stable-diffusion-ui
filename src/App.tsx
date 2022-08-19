@@ -1,15 +1,13 @@
 import { Box, HStack } from "@chakra-ui/react";
-import type { NextPage } from "next";
-import Head from "next/head";
 import { useEffect, useState } from "react";
-import LoadingPage from "../components/pages/LoadingPage";
-import PromptPage from "../components/pages/PromptPage";
-import ResultsPage from "../components/pages/ResultsPage";
-import SidebarPage from "../components/pages/SidebarPage";
-import { Prompt } from "../utils/Prompt";
-import { Result } from "../utils/Result";
+import { Prompt } from "./interfaces/Prompt";
+import { Result } from "./interfaces/Result";
+import LoadingPage from "./pages/LoadingPage";
+import PromptPage from "./pages/PromptPage";
+import ResultsPage from "./pages/ResultsPage";
+import SidebarPage from "./pages/SidebarPage";
 
-const Home: NextPage = () => {
+export default function App() {
 	const [promptValues, setPromptValues] = useState<Prompt>(null);
 	const [loadingPrompt, setLoadingPrompt] = useState("");
 
@@ -69,10 +67,6 @@ const Home: NextPage = () => {
 
 	return (
 		<div>
-			<Head>
-				<title>Cutelab and Blåhaj: Stable Diffusion</title>
-				<link rel="icon" href="/favicon.ico" />
-			</Head>
 			<HStack>
 				<Box flexGrow="1" h="100vh">
 					{result ? (
@@ -109,6 +103,4 @@ const Home: NextPage = () => {
 			</HStack>
 		</div>
 	);
-};
-
-export default Home;
+}

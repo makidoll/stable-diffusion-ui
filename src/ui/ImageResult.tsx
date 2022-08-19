@@ -29,7 +29,7 @@ async function downloadFile(url: string, filename: string) {
 	link.remove();
 }
 
-export function ImageResult(props: { src: string; prompt: string }) {
+export default function ImageResult(props: { src: string; prompt: string }) {
 	const [downloading, setDownloading] = useState(false);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	return (

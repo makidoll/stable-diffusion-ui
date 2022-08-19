@@ -1,6 +1,6 @@
 import { Box, Heading, Image, SimpleGrid, Text } from "@chakra-ui/react";
-import { getResultImageUrls } from "../../utils/GetResultImageUrls";
-import { Result } from "../../utils/Result";
+import { getResultImageUrls } from "../utils/getResultImageUrls";
+import { Result } from "../interfaces/Result";
 
 function PreviousResults(props: { result: Result; onClick?: () => any }) {
 	const images = getResultImageUrls(props.result);
