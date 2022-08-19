@@ -1,10 +1,11 @@
 import datetime
 import os
 import random
+from io import BytesIO
 from pathlib import Path
 from urllib import request
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
 
@@ -78,8 +79,34 @@ def results():
 	return jsonify(results)
 
 @app.route("/api/image/<path:path>")
-def send_report(path):
+def image(path):
 	return send_from_directory(data_path, path)
+
+@app.route("/api/preview/<path:id>")
+def preview(id):
+	size = 64
+	images = [
+	    Image.open(os.path.join(data_path, "id" + id + "_v0.png")),
+	    Image.open(os.path.join(data_path, "id" + id + "_v1.png")),
+	    Image.open(os.path.join(data_path, "id" + id + "_v2.png")),
+	    Image.open(os.path.join(data_path, "id" + id + "_v3.png")),
+	    Image.open(os.path.join(data_path, "id" + id + "_v4.png")),
+	    Image.open(os.path.join(data_path, "id" + id + "_v5.png")),
+	]
+
+	final_image = Image.new("RGB", (size * len(images), size))
+	for i in range(0, len(images)):
+		image = images[i].resize(
+		    (size, size), resample=Image.Resampling.LANCZOS
+		)
+		final_image.paste(image, (size * i, 0))
+
+	final_image_io = BytesIO()
+	final_image.save(final_image_io, "JPEG", quality=70)
+	final_image_io.seek(0)
+	return send_file(final_image_io, mimetype="image/png")
+
+	return final_image
 
 # web server frontend
 

@@ -10,11 +10,16 @@ function PreviousResults(props: { result: Result; onClick?: () => any }) {
 			<Text noOfLines={1} mb={0} mt={2}>
 				{props.result.prompt}
 			</Text>
-			<SimpleGrid columns={6} spacing={0.5}>
+			<Image
+				src={"/api/preview/" + props.result.id}
+				w="100%"
+				borderRadius={4}
+			/>
+			{/* <SimpleGrid columns={6} spacing={0.5}>
 				{images.map((src, i) => (
 					<Image key={i} src={src} w="100%" borderRadius={4} />
 				))}
-			</SimpleGrid>
+			</SimpleGrid> */}
 		</Box>
 	);
 }
