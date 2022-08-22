@@ -5,9 +5,12 @@ from io import BytesIO
 from pathlib import Path
 from urllib import request
 
+import torch
+from diffusers import LMSDiscreteScheduler, StableDiffusionPipelinez
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
+from torch import autocast
 
 data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
@@ -33,6 +36,32 @@ def fakeImage(i, prompt):
 	imgDraw.text((10, 10), prompt, fill=(255, 255, 255))
 	imgDraw.text((10, 25), "output " + str(i), fill=(255, 255, 255))
 	return img
+
+# stable diffusion
+
+model_id = "CompVis/stable-diffusion-v1-4"
+
+scheduler = LMSDiscreteScheduler(
+    beta_start=0.00085,
+    beta_end=0.012,
+    beta_schedule="scaled_linear",
+    num_train_timesteps=1000
+)
+
+pipe = StableDiffusionPipeline.from_pretrained(
+    model_id,
+    scheduler=scheduler,
+    torch_dtype=torch.float32,
+    use_auth_token=True
+)
+
+prompt = "a photo of an astronaut riding a horse on mars"
+with autocast("cuda"):
+	image = pipe(prompt)["sample"][0]
+
+image.save("astronaut_rides_horse.png")
+
+pipe = pipe.to("cuda")
 
 # web server api
 

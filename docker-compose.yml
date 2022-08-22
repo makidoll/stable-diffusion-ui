@@ -13,5 +13,6 @@ services:
                           capabilities: [gpu]
         volumes:
             - ./data:/app/data
+            - ./cache:~/.cache/huggingface/diffusers
         ports:
             - 5001:5000
