@@ -49,7 +49,7 @@ export default function ImageResult(props: {
 					backgroundColor="rgba(0,0,0,0.05)"
 					borderRadius={8}
 					onClick={onOpen}
-					cursor={"pointer"}
+					// cursor={"pointer"} // not when loading
 					objectFit={"contain"}
 				>
 					<Flex
