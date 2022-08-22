@@ -47,7 +47,9 @@ export default function PromptInput(props: {
 									{({ field, form }) => (
 										<SlimNumberInput
 											name={"Seed"}
-											default={-1}
+											min={-1}
+											max={Number.MAX_SAFE_INTEGER}
+											default={Consts.promptDefaults.seed}
 											icon={<FaSeedling />}
 											field={field}
 											form={form}
@@ -60,12 +62,20 @@ export default function PromptInput(props: {
 									{({ field, form }) => (
 										<SlimNumberInput
 											name={"Inf. Steps"}
-											default={50}
+											min={50}
+											max={150}
+											default={
+												Consts.promptDefaults
+													.inferenceSteps
+											}
 											icon={<BsBarChartSteps />}
 											field={field}
 											form={form}
 											disabled={isSubmitting}
 											width={200}
+											tooltip={
+												"50 works best, but 150 for highest detail"
+											}
 										/>
 									)}
 								</Field>
