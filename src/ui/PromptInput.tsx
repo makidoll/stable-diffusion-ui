@@ -71,6 +71,7 @@ export default function PromptInput(props: {
 															-1,
 														);
 													}}
+													disabled={isSubmitting}
 												>
 													Reset
 												</Button>
