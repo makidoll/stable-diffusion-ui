@@ -6,6 +6,7 @@ import {
 	HStack,
 	Image,
 	Text,
+	useToast,
 } from "@chakra-ui/react";
 import { FormikProps } from "formik";
 import { useEffect, useRef, useState } from "react";
@@ -39,6 +40,8 @@ export default function App() {
 
 	const promptFormRef = useRef<FormikProps<Prompt>>();
 
+	const toast = useToast();
+
 	const onPrompt = async ({ prompt, seed }: Prompt) => {
 		setLoading(true);
 
@@ -53,10 +56,19 @@ export default function App() {
 		const result = await response.json();
 
 		setLoading(false);
-		setResult(result);
-		// promptFormRef.current.resetForm({ values: prompt, errors: {} });
 
-		refreshResults();
+		if (result.error) {
+			// show error
+			toast({
+				title: result.error,
+				status: "error",
+				isClosable: true,
+				position: "top-left",
+			});
+		} else {
+			setResult(result);
+			refreshResults();
+		}
 	};
 
 	const onSidebarResultClick = (result: Result) => {
