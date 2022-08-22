@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { FormikProps } from "formik";
 import { useEffect, useRef, useState } from "react";
+import { Consts } from "./consts";
 import { Prompt } from "./interfaces/Prompt";
 import { Result } from "./interfaces/Result";
 import { useResultsStore } from "./state/Results";
@@ -17,10 +18,7 @@ import ImageResult from "./ui/ImageResult";
 import PreviousResults from "./ui/PreviousResults";
 import PromptInput from "./ui/PromptInput";
 import { getRandomAreWorkingXTo } from "./utils/getRandomAreWorkingXTo";
-import {
-	getResultImageUrls,
-	loadingVariations,
-} from "./utils/getResultImageUrls";
+import { getResultImageUrls } from "./utils/getResultImageUrls";
 
 export default function App() {
 	const [loading, setLoading] = useState(false);
@@ -42,12 +40,16 @@ export default function App() {
 
 	const toast = useToast();
 
-	const onPrompt = async ({ prompt, seed }: Prompt) => {
+	const onPrompt = async ({ prompt, seed, inferenceSteps }: Prompt) => {
 		setLoading(true);
 
 		const response = await fetch("/api/generate", {
 			method: "POST",
-			body: JSON.stringify({ prompt, seed: Number(seed) }),
+			body: JSON.stringify({
+				prompt,
+				seed: Number(seed),
+				inferenceSteps: Number(inferenceSteps),
+			}),
 			headers: {
 				"Content-Type": "application/json",
 			},
@@ -74,9 +76,19 @@ export default function App() {
 	const onSidebarResultClick = (result: Result) => {
 		setLoading(false);
 		setResult(result);
-		promptFormRef.current.resetForm({ values: result, errors: {} });
+		promptFormRef.current.resetForm({
+			values: {
+				prompt: result.prompt ?? Consts.promptDefaults.prompt,
+				seed: result.seed ?? Consts.promptDefaults.seed,
+				inferenceSteps:
+					result.inferenceSteps ??
+					Consts.promptDefaults.inferenceSteps,
+			},
+			errors: {},
+		});
 	};
 
+	// TODO: add loading back in with eta per image
 	return (
 		<div>
 			{/* {loading ? (
@@ -128,7 +140,7 @@ export default function App() {
 							gap={2}
 						>
 							{(loading
-								? new Array(loadingVariations).fill("")
+								? new Array(Consts.variations).fill("")
 								: getResultImageUrls(result)
 							).map((src, i) => (
 								<ImageResult

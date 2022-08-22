@@ -10,7 +10,7 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
 
-make_test_images = False
+make_test_images = True
 
 if not make_test_images:
 	import torch
@@ -81,6 +81,13 @@ def generate():
 
 		prompt = request.json["prompt"]
 		seed = int(request.json["seed"])
+		inference_steps = int(request.json["inferenceSteps"])
+
+		if inference_steps > 150:
+			generating = False
+			return jsonify(
+			    {"error": "Please don't do more than 150 inference steps"}
+			), 400
 
 		images = []
 
@@ -103,7 +110,7 @@ def generate():
 					result = pipe(
 					    prompt,
 					    generator=generator,
-					    num_inference_steps=50,
+					    num_inference_steps=inference_steps,
 					    width=512,
 					    height=512,
 					)
@@ -112,6 +119,8 @@ def generate():
 		data = {
 		    "prompt": prompt,
 		    "seed": seed,
+		    "inferenceSteps": inference_steps,
+		    # other
 		    "variations": len(images),
 		    "created": datetime.datetime.utcnow().isoformat() + "Z"
 		}
@@ -130,7 +139,8 @@ def generate():
 
 	except Exception as e:
 		generating = False
-		raise e
+		print(e)
+		return jsonify({"error": "Something went wrong, try again soon"})
 
 @app.route("/api/results", methods=["GET"])
 def results():

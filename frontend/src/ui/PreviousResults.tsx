@@ -1,6 +1,6 @@
-import { Box, Center, HStack, Image, Text, VStack } from "@chakra-ui/react";
+import { Box, Image, Text } from "@chakra-ui/react";
+import { Consts } from "../consts";
 import { Result } from "../interfaces/Result";
-import { loadingVariations } from "../utils/getResultImageUrls";
 
 export default function PreviousResults(props: {
 	result: Result;
@@ -16,7 +16,7 @@ export default function PreviousResults(props: {
 			<Image
 				src={"/api/preview/" + props.result.id}
 				// w="100%"
-				w={2.5 * loadingVariations + "rem"}
+				w={2.5 * Consts.variations + "rem"}
 				h={2.5 + "rem"}
 				borderRadius={4}
 			/>
