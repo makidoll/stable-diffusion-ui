@@ -10,7 +10,8 @@ from flask import Flask, jsonify, request, send_file, send_from_directory
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
 
-make_test_images = True
+# DEV=1 python3 server.py
+make_test_images = os.environ.get("DEV") != None
 
 if not make_test_images:
 	import torch
@@ -48,7 +49,7 @@ else:
 	    scheduler=scheduler,
 	    # revision="fp16",
 	    torch_dtype=torch.float32,
-	    use_auth_token=os.environ["HUGGINGFACE_AUTH_TOKEN"],
+	    use_auth_token=os.environ.get("HUGGINGFACE_AUTH_TOKEN"),
 	).to("cuda")
 
 # paths, server and database
