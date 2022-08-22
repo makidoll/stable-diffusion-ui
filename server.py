@@ -3,45 +3,53 @@ import os
 import random
 from io import BytesIO
 from pathlib import Path
+from time import sleep
 from urllib import request
 
-import torch
-from diffusers import LMSDiscreteScheduler, StableDiffusionPipeline
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
-from torch import autocast
 
-# def fakeImage(i, prompt):
-# 	img = Image.new(
-# 	    "RGB", (256, 256),
-# 	    color=(
-# 	        random.randrange(0, 128),
-# 	        random.randrange(0, 128),
-# 	        random.randrange(0, 128),
-# 	    )
-# 	)
-# 	imgDraw = ImageDraw.Draw(img)
-# 	imgDraw.text((10, 10), prompt, fill=(255, 255, 255))
-# 	imgDraw.text((10, 25), "output " + str(i), fill=(255, 255, 255))
-# 	return img
+make_test_images = False
 
-model_id = "CompVis/stable-diffusion-v1-4"
+if not make_test_images:
+	import torch
+	from diffusers import LMSDiscreteScheduler, StableDiffusionPipeline
+	from torch import autocast
 
-scheduler = LMSDiscreteScheduler(
-    beta_start=0.00085,
-    beta_end=0.012,
-    beta_schedule="scaled_linear",
-    num_train_timesteps=1000
-)
+if make_test_images:
 
-pipe = StableDiffusionPipeline.from_pretrained(
-    model_id,
-    scheduler=scheduler,
-    # revision="fp16",
-    torch_dtype=torch.float32,
-    use_auth_token=os.environ["HUGGINGFACE_AUTH_TOKEN"],
-).to("cuda")
+	def fakeImage(i, prompt):
+		img = Image.new(
+		    "RGB", (256, 256),
+		    color=(
+		        random.randrange(0, 128),
+		        random.randrange(0, 128),
+		        random.randrange(0, 128),
+		    )
+		)
+		imgDraw = ImageDraw.Draw(img)
+		imgDraw.text((10, 10), prompt, fill=(255, 255, 255))
+		imgDraw.text((10, 25), "output " + str(i), fill=(255, 255, 255))
+		return img
+else:
+
+	model_id = "CompVis/stable-diffusion-v1-4"
+
+	scheduler = LMSDiscreteScheduler(
+	    beta_start=0.00085,
+	    beta_end=0.012,
+	    beta_schedule="scaled_linear",
+	    num_train_timesteps=1000
+	)
+
+	pipe = StableDiffusionPipeline.from_pretrained(
+	    model_id,
+	    scheduler=scheduler,
+	    # revision="fp16",
+	    torch_dtype=torch.float32,
+	    use_auth_token=os.environ["HUGGINGFACE_AUTH_TOKEN"],
+	).to("cuda")
 
 # paths, server and database
 
@@ -74,40 +82,38 @@ def generate():
 		prompt = request.json["prompt"]
 		seed = int(request.json["seed"])
 
-		# -1 or 0 will randomize it
-
-		generator = torch.Generator("cuda")
-		if seed == -1:
-			seed = generator.seed()
-		else:
-			generator = generator.manual_seed(seed)
-
 		images = []
-		for i in range(0, variations):
-			with autocast("cuda"):
-				result = pipe(
-					prompt,
-					generator=generator,
-					num_inference_steps=50,
-					width=512,
-					height=512,
-				)
-				images.append(result["sample"][0])
 
-		# images = [
-		#     fakeImage(1, prompt),
-		#     fakeImage(2, prompt),
-		#     fakeImage(3, prompt),
-		#     fakeImage(4, prompt),
-		#     fakeImage(5, prompt),
-		#     fakeImage(6, prompt),
-		# ]
+		if make_test_images:
+			if seed == -1:
+				seed = random.randint(0, 9007199254740991)
+
+			for i in range(0, variations):
+				sleep(1)
+				images.append(fakeImage(i, prompt))
+		else:
+			generator = torch.Generator("cuda")
+			if seed == -1:
+				seed = generator.seed()
+			else:
+				generator = generator.manual_seed(seed)
+
+			for i in range(0, variations):
+				with autocast("cuda"):
+					result = pipe(
+					    prompt,
+					    generator=generator,
+					    num_inference_steps=50,
+					    width=512,
+					    height=512,
+					)
+					images.append(result["sample"][0])
 
 		data = {
-			"prompt": prompt,
-			"seed": seed,
-			"variations": len(images),
-			"created": datetime.datetime.utcnow().isoformat() + "Z"
+		    "prompt": prompt,
+		    "seed": seed,
+		    "variations": len(images),
+		    "created": datetime.datetime.utcnow().isoformat() + "Z"
 		}
 
 		id = db.table("generated").insert(data)

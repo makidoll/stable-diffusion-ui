@@ -16,7 +16,10 @@ import ImageResult from "./ui/ImageResult";
 import PreviousResults from "./ui/PreviousResults";
 import PromptInput from "./ui/PromptInput";
 import { getRandomAreWorkingXTo } from "./utils/getRandomAreWorkingXTo";
-import { getResultImageUrls } from "./utils/getResultImageUrls";
+import {
+	getResultImageUrls,
+	loadingVariations,
+} from "./utils/getResultImageUrls";
 
 export default function App() {
 	const [loading, setLoading] = useState(false);
@@ -48,8 +51,6 @@ export default function App() {
 		});
 
 		const result = await response.json();
-
-		await new Promise(resolve => setTimeout(resolve, 1000 * 2));
 
 		setLoading(false);
 		setResult(result);
@@ -86,7 +87,7 @@ export default function App() {
 					flexDirection="column"
 					alignItems="center"
 					// vertical alignment
-					justifyContent={result ? "flex-start" : "center"}
+					justifyContent={result || loading ? "flex-start" : "center"}
 				>
 					{result || loading ? null : (
 						<>
@@ -106,21 +107,24 @@ export default function App() {
 					{result || loading ? null : <Box mb={8}></Box>}
 					{result || loading ? (
 						<Grid
-							pt={4}
 							templateColumns={"repeat(3, auto)"}
+							alignItems={"center"}
 							justifyContent={"center"}
+							h="100%"
+							pb={32}
 							// justifyContent={"flex-start"}
 							gap={2}
 						>
 							{(loading
-								? new Array(6).fill("")
+								? new Array(loadingVariations).fill("")
 								: getResultImageUrls(result)
 							).map((src, i) => (
 								<ImageResult
 									key={i}
 									prompt={loading ? "" : result.prompt}
 									src={src}
-									height="41.5vh"
+									// height="41.5vh"
+									height="44vh"
 									loadingWithAreWorkingXTo={
 										loading && loadingWithAreWorkingXTo
 											? loadingWithAreWorkingXTo[i]

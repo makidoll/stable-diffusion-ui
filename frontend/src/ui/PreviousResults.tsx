@@ -1,5 +1,6 @@
-import { Box, Image, Text } from "@chakra-ui/react";
+import { Box, Center, HStack, Image, Text, VStack } from "@chakra-ui/react";
 import { Result } from "../interfaces/Result";
+import { loadingVariations } from "../utils/getResultImageUrls";
 
 export default function PreviousResults(props: {
 	result: Result;
@@ -14,7 +15,9 @@ export default function PreviousResults(props: {
 			</Text>
 			<Image
 				src={"/api/preview/" + props.result.id}
-				w="100%"
+				// w="100%"
+				w={2.5 * loadingVariations + "rem"}
+				h={2.5 + "rem"}
 				borderRadius={4}
 			/>
 			{/* <SimpleGrid columns={6} spacing={0.5}>
