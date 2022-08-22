@@ -62,7 +62,7 @@ export default function PromptInput(props: {
 									{({ field, form }) => (
 										<SlimNumberInput
 											name={"Inf. Steps"}
-											min={50}
+											min={1}
 											max={150}
 											default={
 												Consts.promptDefaults
