@@ -10,7 +10,7 @@ export default function PreviousResults(props: {
 
 	return (
 		<Box cursor={"pointer"} onClick={props.onClick}>
-			<Text noOfLines={1} mb={0} mt={1}>
+			<Text noOfLines={1} mb={0} mt={1} fontSize={12}>
 				{props.result.prompt}
 			</Text>
 			<Image
