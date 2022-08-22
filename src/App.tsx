@@ -1,33 +1,47 @@
-import { Box, HStack } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import {
+	Box,
+	Flex,
+	Grid,
+	Heading,
+	HStack,
+	Image,
+	Text,
+} from "@chakra-ui/react";
+import { FormikProps } from "formik";
+import { useEffect, useRef, useState } from "react";
 import { Prompt } from "./interfaces/Prompt";
 import { Result } from "./interfaces/Result";
-import LoadingPage from "./pages/LoadingPage";
-import PromptPage from "./pages/PromptPage";
-import ResultsPage from "./pages/ResultsPage";
-import SidebarPage from "./pages/SidebarPage";
 import { useResultsStore } from "./state/Results";
+import ImageResult from "./ui/ImageResult";
+import PreviousResults from "./ui/PreviousResults";
+import PromptInput from "./ui/PromptInput";
+import { getRandomAreWorkingXTo } from "./utils/getRandomAreWorkingXTo";
+import { getResultImageUrls } from "./utils/getResultImageUrls";
 
 export default function App() {
-	const [initialPromptValues, setInitialPromptValues] =
-		useState<Prompt>(null);
+	const [loading, setLoading] = useState(false);
+	const [loadingWithAreWorkingXTo, setLoadingWithAreWorkingXTo] =
+		useState<string[]>(null);
 
-	const [loadingPrompt, setLoadingPrompt] = useState("");
+	useEffect(() => {
+		setLoadingWithAreWorkingXTo(loading ? getRandomAreWorkingXTo(6) : null);
+	}, [loading]);
 
 	const [result, setResult] = useState<Result>(null);
-
-	const refreshResults = useResultsStore(state => state.refresh);
+	const { results, refresh: refreshResults } = useResultsStore();
 
 	useEffect(() => {
 		refreshResults();
 	}, []);
 
-	const onPrompt = async (prompt: string, seed: number) => {
-		setLoadingPrompt(prompt);
+	const promptFormRef = useRef<FormikProps<Prompt>>();
+
+	const onPrompt = async (prompt: Prompt) => {
+		setLoading(true);
 
 		const response = await fetch("/api/generate", {
 			method: "POST",
-			body: JSON.stringify({ prompt, seed }),
+			body: JSON.stringify(prompt),
 			headers: {
 				"Content-Type": "application/json",
 			},
@@ -35,64 +49,123 @@ export default function App() {
 
 		const result = await response.json();
 
-		setTimeout(() => {
-			setResult(result);
-			setLoadingPrompt("");
+		await new Promise(resolve => setTimeout(resolve, 1000 * 2));
 
-			refreshResults();
-		}, 1000 * 2);
-	};
+		setLoading(false);
+		setResult(result);
+		// promptFormRef.current.resetForm({ values: prompt, errors: {} });
 
-	const onStartOver = (reproduceResult?: Result) => {
-		setInitialPromptValues(
-			reproduceResult
-				? {
-						prompt: reproduceResult.prompt,
-						seed: reproduceResult.seed,
-				  }
-				: null,
-		);
-
-		setResult(null);
-		setLoadingPrompt("");
+		refreshResults();
 	};
 
 	const onSidebarResultClick = (result: Result) => {
+		setLoading(false);
 		setResult(result);
-		setLoadingPrompt("");
+		promptFormRef.current.resetForm({ values: result, errors: {} });
 	};
 
 	return (
 		<div>
+			{/* {loading ? (
+				<Progress
+					// size="xs"
+					h="1"
+					mb="-1"
+					value={0}
+					isIndeterminate
+					colorScheme="pink"
+				/>
+			) : null} */}
 			<HStack>
-				<Box flexGrow="1" h="100vh">
-					{result ? (
-						<ResultsPage
-							result={result}
-							onStartOver={onStartOver}
-						/>
-					) : loadingPrompt != "" ? (
-						<LoadingPage prompt={loadingPrompt} />
-					) : (
-						<PromptPage
-							initialPromptValues={initialPromptValues}
-							onPrompt={onPrompt}
-						/>
+				<Flex
+					flexGrow="1"
+					h="100vh"
+					overflow="hidden"
+					p={4}
+					pr={2}
+					flexDirection="column"
+					alignItems="center"
+					// vertical alignment
+					justifyContent={result ? "flex-start" : "center"}
+				>
+					{result || loading ? null : (
+						<>
+							<Image src="/icon.svg" h={24} mb={4}></Image>
+							<Heading>Cutelab and Blåhaj</Heading>
+							<Heading size="lg" mb={6}>
+								make Stable Diffusion
+							</Heading>
+						</>
 					)}
-				</Box>
-				<Box w={300} minW={300} h={"100vh"} p={4} pl={0}>
+					<PromptInput
+						promptFormRef={promptFormRef}
+						onPrompt={onPrompt}
+						resultForDisplay={result}
+						width={result || loading ? "100%" : "80%"}
+					/>
+					{result || loading ? null : <Box mb={8}></Box>}
+					{result || loading ? (
+						<Grid
+							pt={4}
+							templateColumns={"repeat(3, auto)"}
+							justifyContent={"center"}
+							// justifyContent={"flex-start"}
+							gap={2}
+						>
+							{(loading
+								? new Array(6).fill("")
+								: getResultImageUrls(result)
+							).map((src, i) => (
+								<ImageResult
+									key={i}
+									prompt={loading ? "" : result.prompt}
+									src={src}
+									height="41.5vh"
+									loadingWithAreWorkingXTo={
+										loading && loadingWithAreWorkingXTo
+											? loadingWithAreWorkingXTo[i]
+											: null
+									}
+								/>
+							))}
+						</Grid>
+					) : null}
+				</Flex>
+				<Box
+					w={300}
+					minW={300}
+					h="100vh"
+					overflow="hidden"
+					p={4}
+					pl={0}
+				>
 					<Box
 						h="100%"
-						// borderWidth={1}
-						borderWidth={2}
-						borderColor="blackAlpha.200"
+						borderWidth={1}
+						// borderWidth={2}
+						// borderColor="blackAlpha.200"
 						// borderColor="blackAlpha.100"
 						borderRadius={8}
 						// shadow={"xl"}
+						overflow="scroll"
 					>
-						<SidebarPage
-							onSidebarResultClick={onSidebarResultClick}
-						/>
+						<Box padding={4}>
+							<Heading size={"md"}>Last prompts</Heading>
+							<Text fontWeight={500}>
+								{`${results.length} ${
+									results.length == 1 ? "picture" : "pictures"
+								} generated`}
+							</Text>
+							{results.map(result => (
+								<PreviousResults
+									key={result.id}
+									result={result}
+									onClick={() => {
+										onSidebarResultClick(result);
+									}}
+								/>
+							))}
+						</Box>
 					</Box>
 				</Box>
 			</HStack>
