@@ -17,6 +17,7 @@ import { useResultsStore } from "./state/Results";
 import ImageResult from "./ui/ImageResult";
 import PreviousResults from "./ui/PreviousResults";
 import PromptInput from "./ui/PromptInput";
+import TopScreenLoadingBar from "./ui/TopScreenLoadingBar";
 import { getRandomAreWorkingXTo } from "./utils/getRandomAreWorkingXTo";
 import { getResultImageUrls } from "./utils/getResultImageUrls";
 
@@ -24,6 +25,9 @@ export default function App() {
 	const [loading, setLoading] = useState(false);
 	const [loadingWithAreWorkingXTo, setLoadingWithAreWorkingXTo] =
 		useState<string[]>(null);
+
+	const [loadingStartTime, setLoadingStartTime] = useState<number>(0);
+	const [loadingEndTime, setLoadingEndTime] = useState<number>(0);
 
 	useEffect(() => {
 		setLoadingWithAreWorkingXTo(loading ? getRandomAreWorkingXTo(6) : null);
@@ -42,6 +46,12 @@ export default function App() {
 
 	const onPrompt = async ({ prompt, seed, inferenceSteps }: Prompt) => {
 		setLoading(true);
+
+		const etaInSeconds =
+			(Consts.etaPerImage / 50) * inferenceSteps * Consts.variations;
+
+		setLoadingStartTime(Date.now());
+		setLoadingEndTime(Date.now() + etaInSeconds * 1000);
 
 		const response = await fetch("/api/generate", {
 			method: "POST",
@@ -91,16 +101,11 @@ export default function App() {
 	// TODO: add loading back in with eta per image
 	return (
 		<div>
-			{/* {loading ? (
-				<Progress
-					// size="xs"
-					h="1"
-					mb="-1"
-					value={0}
-					isIndeterminate
-					colorScheme="pink"
-				/>
-			) : null} */}
+			<TopScreenLoadingBar
+				enabled={loading}
+				startTime={loadingStartTime}
+				endTime={loadingEndTime}
+			/>
 			<HStack>
 				<Flex
 					flexGrow="1"

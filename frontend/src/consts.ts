@@ -8,6 +8,8 @@ const promptDefaults: Prompt = {
 
 export const Consts = {
 	variations: 3,
-	// etaPerImageWith50InfSteps: 10, // seconds
+	// with 50 steps at 512 x 512
+	// its 10s on my 3060 ti
+	etaPerImage: 10, // seconds
 	promptDefaults,
 };
