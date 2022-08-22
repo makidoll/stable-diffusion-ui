@@ -36,12 +36,12 @@ export default function App() {
 
 	const promptFormRef = useRef<FormikProps<Prompt>>();
 
-	const onPrompt = async (prompt: Prompt) => {
+	const onPrompt = async ({ prompt, seed }: Prompt) => {
 		setLoading(true);
 
 		const response = await fetch("/api/generate", {
 			method: "POST",
-			body: JSON.stringify(prompt),
+			body: JSON.stringify({ prompt, seed: Number(seed) }),
 			headers: {
 				"Content-Type": "application/json",
 			},

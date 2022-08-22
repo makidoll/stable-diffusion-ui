@@ -1,7 +1,9 @@
 # stable diffusion
 diffusers==0.2.4
 transformers==4.21.1 
+scipy==1.9.0
+ftfy==6.1.1
 # web server
 tinydb==4.7.0
-Flask==2.2.2 
+Flask==2.2.2
 Pillow==9.2.0

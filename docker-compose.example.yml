@@ -16,3 +16,9 @@ services:
             - ./cache:/root/.cache/huggingface/diffusers
         ports:
             - 5000:5000
+        environment:
+            # agree to stable diffusion license first
+            # https://huggingface.co/CompVis/stable-diffusion-v1-4
+            # then get a token from here
+            # https://huggingface.co/settings/tokens
+            - HUGGINGFACE_AUTH_TOKEN=

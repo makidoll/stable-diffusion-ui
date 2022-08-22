@@ -6,38 +6,25 @@ from pathlib import Path
 from urllib import request
 
 import torch
-from diffusers import LMSDiscreteScheduler, StableDiffusionPipelinez
+from diffusers import LMSDiscreteScheduler, StableDiffusionPipeline
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
 from torch import autocast
 
-data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
-
-app = Flask(__name__, static_folder=frontend_path, static_url_path="/")
-
-Path(data_path).mkdir(parents=True, exist_ok=True)
-
-db = TinyDB(os.path.join(data_path, "db.json"))
-
-# --
-
-def fakeImage(i, prompt):
-	img = Image.new(
-	    "RGB", (256, 256),
-	    color=(
-	        random.randrange(0, 128),
-	        random.randrange(0, 128),
-	        random.randrange(0, 128),
-	    )
-	)
-	imgDraw = ImageDraw.Draw(img)
-	imgDraw.text((10, 10), prompt, fill=(255, 255, 255))
-	imgDraw.text((10, 25), "output " + str(i), fill=(255, 255, 255))
-	return img
-
-# stable diffusion
+# def fakeImage(i, prompt):
+# 	img = Image.new(
+# 	    "RGB", (256, 256),
+# 	    color=(
+# 	        random.randrange(0, 128),
+# 	        random.randrange(0, 128),
+# 	        random.randrange(0, 128),
+# 	    )
+# 	)
+# 	imgDraw = ImageDraw.Draw(img)
+# 	imgDraw.text((10, 10), prompt, fill=(255, 255, 255))
+# 	imgDraw.text((10, 25), "output " + str(i), fill=(255, 255, 255))
+# 	return img
 
 model_id = "CompVis/stable-diffusion-v1-4"
 
@@ -51,53 +38,93 @@ scheduler = LMSDiscreteScheduler(
 pipe = StableDiffusionPipeline.from_pretrained(
     model_id,
     scheduler=scheduler,
+    # revision="fp16",
     torch_dtype=torch.float32,
-    use_auth_token=True
+    use_auth_token=os.environ["HUGGINGFACE_AUTH_TOKEN"],
+).to("cuda")
+
+# paths, server and database
+
+data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+frontend_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "frontend/dist"
 )
 
-prompt = "a photo of an astronaut riding a horse on mars"
-with autocast("cuda"):
-	image = pipe(prompt)["sample"][0]
+app = Flask(__name__, static_folder=frontend_path, static_url_path="/")
 
-image.save("astronaut_rides_horse.png")
+Path(data_path).mkdir(parents=True, exist_ok=True)
 
-pipe = pipe.to("cuda")
+db = TinyDB(os.path.join(data_path, "db.json"))
 
 # web server api
 
+generating = False
+
 @app.route("/api/generate", methods=["POST"])
 def generate():
-	prompt = request.json["prompt"]
-	seed = int(request.json["seed"])
+	global generating
+	if generating:
+		return jsonify({"error": "Busy generating another"}), 400
 
-	if seed == -1:
-		seed = random.randint(0, 9007199254740991)
+	try:
+		generating = True
 
-	images = [
-	    fakeImage(1, prompt),
-	    fakeImage(2, prompt),
-	    fakeImage(3, prompt),
-	    fakeImage(4, prompt),
-	    fakeImage(5, prompt),
-	    fakeImage(6, prompt),
-	]
+		variations = 3
 
-	data = {
-	    "prompt": prompt,
-	    "seed": seed,
-	    "variations": len(images),
-	    "created": datetime.datetime.utcnow().isoformat() + "Z"
-	}
+		prompt = request.json["prompt"]
+		seed = int(request.json["seed"])
 
-	id = db.table("generated").insert(data)
-	data["id"] = id
+		# -1 or 0 will randomize it
 
-	for v in range(0, len(images)):
-		filename = "id" + str(id) + "_v" + str(v) + ".png"
-		save_path = os.path.join(data_path, filename)
-		images[v].save(save_path)
+		generator = torch.Generator("cuda")
+		if seed == -1:
+			seed = generator.seed()
+		else:
+			generator = generator.manual_seed(seed)
 
-	return jsonify(data)
+		images = []
+		for i in range(0, variations):
+			with autocast("cuda"):
+				result = pipe(
+					prompt,
+					generator=generator,
+					num_inference_steps=50,
+					width=512,
+					height=512,
+				)
+				images.append(result["sample"][0])
+
+		# images = [
+		#     fakeImage(1, prompt),
+		#     fakeImage(2, prompt),
+		#     fakeImage(3, prompt),
+		#     fakeImage(4, prompt),
+		#     fakeImage(5, prompt),
+		#     fakeImage(6, prompt),
+		# ]
+
+		data = {
+			"prompt": prompt,
+			"seed": seed,
+			"variations": len(images),
+			"created": datetime.datetime.utcnow().isoformat() + "Z"
+		}
+
+		id = db.table("generated").insert(data)
+		data["id"] = id
+
+		for v in range(0, len(images)):
+			filename = "id" + str(id) + "_v" + str(v) + ".png"
+			save_path = os.path.join(data_path, filename)
+			images[v].save(save_path)
+
+		generating = False
+
+		return jsonify(data)
+
+	except Exception as e:
+		generating = False
+		raise e
 
 @app.route("/api/results", methods=["GET"])
 def results():
@@ -118,9 +145,9 @@ def preview(id):
 	    Image.open(os.path.join(data_path, "id" + id + "_v0.png")),
 	    Image.open(os.path.join(data_path, "id" + id + "_v1.png")),
 	    Image.open(os.path.join(data_path, "id" + id + "_v2.png")),
-	    Image.open(os.path.join(data_path, "id" + id + "_v3.png")),
-	    Image.open(os.path.join(data_path, "id" + id + "_v4.png")),
-	    Image.open(os.path.join(data_path, "id" + id + "_v5.png")),
+	    # Image.open(os.path.join(data_path, "id" + id + "_v3.png")),
+	    # Image.open(os.path.join(data_path, "id" + id + "_v4.png")),
+	    # Image.open(os.path.join(data_path, "id" + id + "_v5.png")),
 	]
 
 	final_image = Image.new("RGB", (size * len(images), size))
