@@ -8,11 +8,11 @@ services:
                 reservations:
                     devices:
                         - driver: nvidia
-                          # count: 1
-                          device_ids: ["1"] # 3060 ti
+                          count: 1
+                          # device_ids: ["1"] # 3060 ti
                           capabilities: [gpu]
         volumes:
             - ./data:/app/data
-            - ./cache:~/.cache/huggingface/diffusers
+            - ./cache:/root/.cache/huggingface/diffusers
         ports:
-            - 5001:5000
+            - 5000:5000
