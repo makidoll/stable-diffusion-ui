@@ -108,7 +108,7 @@ export default function ImageResult(props: {
 							<Center flexDirection={"column"}>
 								<Image
 									src={props.src}
-									width="90%"
+									width="100%"
 									style={{ aspectRatio: "1" }}
 									backgroundColor="rgba(0,0,0,0.05)"
 									borderRadius={8}
