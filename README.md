@@ -31,16 +31,7 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
     `apt-get install nvidia-container-runtime`
 
--   Copy `docker-compose.example.yml` to `docker-compose.yml` and configure it with your **Hugging Face token**
-
--   In `server.py` you can find:
-
-    ```py
-    # revision="fp16",
-    torch_dtype=torch.float32,
-    ```
-
-    Either leave as is for `float32` or uncomment and update for `float16` half precision
+-   Copy `docker-compose.example.yml` to `docker-compose.yml` and configure it with your **Hugging Face token** and **optionally enable float16** to reduce VRAM
 
 -   Finally, run:
 

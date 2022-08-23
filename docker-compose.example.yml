@@ -22,3 +22,5 @@ services:
             # then get a token from here
             # https://huggingface.co/settings/tokens
             - HUGGINGFACE_AUTH_TOKEN=
+            # if you want to use float16 to reduce vram, uncomment
+            # - USE_FLOAT16=1

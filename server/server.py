@@ -19,6 +19,8 @@ make_test_images = os.environ.get("DEV") == "1"
 if make_test_images:
 	print("IN DEV=1 MODE, WILL MAKE TEST IMAGES INSTEAD")
 
+use_float16 = os.environ.get("USE_FLOAT16") != None
+
 if not make_test_images:
 	import torch
 	from diffusers import LMSDiscreteScheduler
@@ -56,8 +58,8 @@ else:
 	pipe = custom_pipeline_stable_diffusion.StableDiffusionPipeline.from_pretrained(
 	    model_id,
 	    scheduler=scheduler,
-	    # revision="fp16",
-	    torch_dtype=torch.float32,
+	    revision="fp16" if use_float16 else None,
+	    torch_dtype=torch.float16 if use_float16 else torch.float32,
 	    use_auth_token=os.environ.get("HUGGINGFACE_AUTH_TOKEN"),
 	).to("cuda")
 
