@@ -152,7 +152,14 @@ export default function App() {
 				>
 					{result || loading ? null : (
 						<>
-							<Image src="/icon.svg" h={24} mb={4}></Image>
+							<Image
+								src={
+									new URL("../icon.svg", import.meta.url)
+										.pathname
+								}
+								h={24}
+								mb={4}
+							></Image>
 							<Heading>Cutelab and Blåhaj</Heading>
 							<Heading size="lg" mb={6}>
 								make Stable Diffusion
