@@ -11,7 +11,9 @@ from PIL import Image, ImageDraw
 from tinydb import TinyDB
 
 # DEV=1 python3 server.py
-make_test_images = os.environ.get("DEV") != None
+make_test_images = os.environ.get("DEV") == "1"
+if make_test_images:
+	print("IN DEV=1 MODE, WILL MAKE TEST IMAGES INSTEAD")
 
 if not make_test_images:
 	import torch
