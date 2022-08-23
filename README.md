@@ -18,6 +18,8 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
 -   Use waitress with Flask- https://flask.palletsprojects.com/en/2.2.x/deploying/waitress/
 
+-   Send/stream only necessary progress data, then merge state in UI to reduce bandwidth 
+
 ## Installation (for Docker and Linux)
 
 -   Install Docker and Nvidia Container Runtime
