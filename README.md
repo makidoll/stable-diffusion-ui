@@ -22,7 +22,7 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
     `apt-get install nvidia-container-runtime`
 
--   Copy `docker-compose.example.yml` to `docker-compose.yml` and configure it with your Hugging Face token
+-   Copy `docker-compose.example.yml` to `docker-compose.yml` and configure it with your **Hugging Face token** and your **ETA for the progress bar** (will automate hopefully)
 
 -   In `server.py` you can find:
 
@@ -32,16 +32,6 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
     ```
 
     Either leave as is for `float32` or uncomment and update for `float16` half precision
-
--   In `frontend/src/consts.ts` you'll find:
-
-    ```js
-    // with 50 steps at 512 x 512
-    // its 10s on my 3060 ti
-    etaPerImage: 10, // seconds
-    ```
-
-    The `etaPerImage` is set to how long it takes to generate one image at 50 steps at 512 x 512. Update this as best as you can to get a more accurate progress bar.
 
 -   Finally, run:
 

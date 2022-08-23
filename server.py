@@ -13,6 +13,16 @@ from tinydb import TinyDB
 # DEV=1 python3 server.py
 make_test_images = os.environ.get("DEV") != None
 
+# with 50 steps at 512 x 512
+# its 10s on my 3060 ti (linux)
+# its 6s on my 3080 ti (windows)
+eta_per_image = os.environ.get("ETA_PER_IMAGE")
+if eta_per_image == None:
+	eta_per_image = 10
+
+test_images_fake_eta = 1
+eta_per_image = test_images_fake_eta
+
 if not make_test_images:
 	import torch
 	from diffusers import LMSDiscreteScheduler, StableDiffusionPipeline
@@ -114,7 +124,7 @@ def generate():
 					seed = random.randint(0, 9007199254740991)
 
 				for i in range(0, variations):
-					sleep(1)
+					sleep(test_images_fake_eta)
 
 					image = fakeImage(i, prompt)
 					filename = "id" + str(id) + "_v" + str(i) + ".png"
@@ -207,6 +217,10 @@ def results():
 		results[i]["id"] = i + 1
 	results.reverse()
 	return jsonify(results)
+
+@app.route("/api/etaperimage", methods=["GET"])
+def get_eta_per_image():
+	return jsonify({"etaPerImage": eta_per_image})
 
 @app.route("/api/image/<path:path>")
 def image(path):

@@ -28,6 +28,8 @@ export default function App() {
 	const [loading, setLoading] = useState(false);
 	const [areWorkingXTo, setAreWorkingXTo] = useState<string[]>(null);
 
+	const [etaPerImage, setEtaPerImage] = useState<number>(10);
+
 	const [loadingStartTime, setLoadingStartTime] = useState<number>(0);
 	const [loadingEndTime, setLoadingEndTime] = useState<number>(0);
 
@@ -42,6 +44,13 @@ export default function App() {
 
 	useEffect(() => {
 		refreshResults();
+
+		// get eta per image
+		(async () => {
+			const response = await fetch("/api/etaperimage");
+			const data = await response.json();
+			setEtaPerImage((data ?? {}).etaPerImage ?? 10);
+		})();
 	}, []);
 
 	const promptFormRef = useRef<FormikProps<Prompt>>();
@@ -66,7 +75,7 @@ export default function App() {
 		});
 
 		const etaInSeconds =
-			(Consts.etaPerImage / 50) * inferenceSteps * Consts.variations;
+			(etaPerImage / 50) * inferenceSteps * Consts.variations;
 
 		setLoadingStartTime(Date.now());
 		setLoadingEndTime(Date.now() + etaInSeconds * 1000);
