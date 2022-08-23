@@ -12,10 +12,6 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 -   **Load any** of your previous images and **reproduce exactly**
     -   Then you can carefully **tweak the prompt**
 
-## Todo
-
--   Make gifs for the readme
-
 ## Installation (for Docker and Linux)
 
 -   Install Docker and Nvidia Container Runtime
