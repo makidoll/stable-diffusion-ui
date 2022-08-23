@@ -20,6 +20,7 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 -   Label changes in custom stable diffusion pipeline
 -   Env var for fp16
 -   Stop safety checkers from loading
+-   Gzip things
 
 ## Installation (for Docker and Linux)
 
