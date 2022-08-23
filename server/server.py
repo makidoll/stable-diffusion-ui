@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import os
 import random
 from io import BytesIO
@@ -232,6 +233,7 @@ def image(path):
 @app.route("/api/preview/<path:id>")
 def preview(id):
 	size = 64
+
 	images = [
 	    Image.open(os.path.join(data_path, "id" + id + "_v0.png")),
 	    Image.open(os.path.join(data_path, "id" + id + "_v1.png")),
@@ -240,6 +242,11 @@ def preview(id):
 	    # Image.open(os.path.join(data_path, "id" + id + "_v4.png")),
 	    # Image.open(os.path.join(data_path, "id" + id + "_v5.png")),
 	]
+
+	etag_hash = ""
+	for image in images:
+		etag_hash += hashlib.md5(image.tobytes()).hexdigest()
+	etag_hash = hashlib.md5(bytes(etag_hash, "utf-8")).hexdigest()
 
 	final_image = Image.new("RGB", (size * len(images), size))
 	for i in range(0, len(images)):
@@ -251,7 +258,8 @@ def preview(id):
 	final_image_io = BytesIO()
 	final_image.save(final_image_io, "JPEG", quality=70)
 	final_image_io.seek(0)
-	return send_file(final_image_io, mimetype="image/png")
+
+	return send_file(final_image_io, mimetype="image/png", etag=etag_hash)
 
 # web server frontend
 
