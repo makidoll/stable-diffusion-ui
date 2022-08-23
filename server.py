@@ -16,12 +16,11 @@ make_test_images = os.environ.get("DEV") != None
 # with 50 steps at 512 x 512
 # its 10s on my 3060 ti (linux)
 # its 6s on my 3080 ti (windows)
-eta_per_image = os.environ.get("ETA_PER_IMAGE")
-if eta_per_image == None:
-	eta_per_image = 10
+eta_per_image = int(os.environ.get("ETA_PER_IMAGE"))
 
 test_images_fake_eta = 1
-eta_per_image = test_images_fake_eta
+if make_test_images:
+	eta_per_image = test_images_fake_eta
 
 if not make_test_images:
 	import torch
