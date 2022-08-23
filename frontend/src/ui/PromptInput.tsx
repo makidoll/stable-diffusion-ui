@@ -5,6 +5,7 @@ import { MutableRefObject } from "react";
 import { BsBarChartSteps } from "react-icons/bs";
 import { FaSeedling } from "react-icons/fa";
 import { MdCloud } from "react-icons/md";
+import { TbArrowAutofitHeight, TbArrowAutofitWidth } from "react-icons/tb";
 import { Consts } from "../consts";
 import { Prompt } from "../interfaces/Prompt";
 import { Result } from "../interfaces/Result";
@@ -72,10 +73,44 @@ export default function PromptInput(props: {
 											field={field}
 											form={form}
 											disabled={isSubmitting}
-											width={200}
+											width={180}
 											tooltip={
 												"50 works best, but 150 for highest detail"
 											}
+										/>
+									)}
+								</Field>
+								<Field name="width">
+									{({ field, form }) => (
+										<SlimNumberInput
+											name={"Width"}
+											min={256}
+											max={768}
+											default={
+												Consts.promptDefaults.width
+											}
+											icon={<TbArrowAutofitWidth />}
+											field={field}
+											form={form}
+											disabled={isSubmitting}
+											width={150}
+										/>
+									)}
+								</Field>
+								<Field name="height">
+									{({ field, form }) => (
+										<SlimNumberInput
+											name={"Height"}
+											min={256}
+											max={768}
+											default={
+												Consts.promptDefaults.height
+											}
+											icon={<TbArrowAutofitHeight />}
+											field={field}
+											form={form}
+											disabled={isSubmitting}
+											width={150}
 										/>
 									)}
 								</Field>

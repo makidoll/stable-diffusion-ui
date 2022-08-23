@@ -8,6 +8,11 @@ export default function PreviousResults(props: {
 }) {
 	// const images = getResultImageUrls(props.result);
 
+	const aspectRatio =
+		props.result.width != null && props.result.height != null
+			? props.result.width / props.result.height
+			: 1;
+
 	return (
 		<Box cursor={"pointer"} onClick={props.onClick}>
 			<Text noOfLines={1} mb={0} mt={1} fontSize={12}>
@@ -16,7 +21,7 @@ export default function PreviousResults(props: {
 			<Image
 				src={"/api/preview/" + props.result.id}
 				// w="100%"
-				w={2.5 * Consts.variations + "rem"}
+				w={2.5 * Consts.variations * aspectRatio + "rem"}
 				h={2.5 + "rem"}
 				borderRadius={4}
 			/>

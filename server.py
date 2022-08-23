@@ -83,6 +83,8 @@ def generate():
 		prompt = request.json["prompt"]
 		seed = int(request.json["seed"])
 		inference_steps = int(request.json["inferenceSteps"])
+		width = int(request.json["width"])
+		height = int(request.json["height"])
 
 		if inference_steps > 150:
 			generating = False
@@ -112,8 +114,8 @@ def generate():
 					    prompt,
 					    generator=generator,
 					    num_inference_steps=inference_steps,
-					    width=512,
-					    height=512,
+					    width=width,
+					    height=height,
 					)
 					images.append(result["sample"][0])
 
@@ -121,6 +123,8 @@ def generate():
 		    "prompt": prompt,
 		    "seed": seed,
 		    "inferenceSteps": inference_steps,
+		    "width": width,
+		    "height": height,
 		    # other
 		    "variations": len(images),
 		    "created": datetime.datetime.utcnow().isoformat() + "Z"
@@ -178,8 +182,6 @@ def preview(id):
 	final_image.save(final_image_io, "JPEG", quality=70)
 	final_image_io.seek(0)
 	return send_file(final_image_io, mimetype="image/png")
-
-	return final_image
 
 # web server frontend
 

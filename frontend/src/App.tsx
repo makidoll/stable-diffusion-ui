@@ -46,7 +46,13 @@ export default function App() {
 
 	const toast = useToast();
 
-	const onPrompt = async ({ prompt, seed, inferenceSteps }: Prompt) => {
+	const onPrompt = async ({
+		prompt,
+		seed,
+		inferenceSteps,
+		width,
+		height,
+	}: Prompt) => {
 		setLoading(true);
 
 		const etaInSeconds =
@@ -55,13 +61,17 @@ export default function App() {
 		setLoadingStartTime(Date.now());
 		setLoadingEndTime(Date.now() + etaInSeconds * 1000);
 
+		const body: Prompt = {
+			prompt,
+			seed: Number(seed),
+			inferenceSteps: Number(inferenceSteps),
+			width: Number(width),
+			height: Number(height),
+		};
+
 		const response = await fetch("/api/generate", {
 			method: "POST",
-			body: JSON.stringify({
-				prompt,
-				seed: Number(seed),
-				inferenceSteps: Number(inferenceSteps),
-			}),
+			body: JSON.stringify(body),
 			headers: {
 				"Content-Type": "application/json",
 			},
@@ -88,14 +98,15 @@ export default function App() {
 	const onSidebarResultClick = (result: Result) => {
 		setLoading(false);
 		setResult(result);
+
+		let values = {};
+		for (let key of Object.keys(Consts.promptDefaults)) {
+			// get from result otherwise if null, use default
+			values[key] = result[key] ?? Consts.promptDefaults[key];
+		}
+
 		promptFormRef.current.resetForm({
-			values: {
-				prompt: result.prompt ?? Consts.promptDefaults.prompt,
-				seed: result.seed ?? Consts.promptDefaults.seed,
-				inferenceSteps:
-					result.inferenceSteps ??
-					Consts.promptDefaults.inferenceSteps,
-			},
+			values: values as any,
 			errors: {},
 		});
 	};
