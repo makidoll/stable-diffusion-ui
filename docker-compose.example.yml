@@ -22,7 +22,3 @@ services:
             # then get a token from here
             # https://huggingface.co/settings/tokens
             - HUGGINGFACE_AUTH_TOKEN=
-            # with 50 steps at 512 x 512
-            # its 10s on my 3060 ti (linux)
-            # its 6s on my 3080 ti (windows)
-            - ETA_PER_IMAGE=10 # seconds

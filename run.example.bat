@@ -6,9 +6,4 @@
 @rem https://huggingface.co/settings/tokens
 set HUGGINGFACE_AUTH_TOKEN=
 
-@rem with 50 steps at 512 x 512
-@rem its 10s on my 3060 ti (linux)
-@rem its 6s on my 3080 ti (windows)
-set ETA_PER_IMAGE=6
-
 python server.py

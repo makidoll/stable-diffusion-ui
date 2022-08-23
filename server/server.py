@@ -13,15 +13,6 @@ from tinydb import TinyDB
 # DEV=1 python3 server.py
 make_test_images = os.environ.get("DEV") != None
 
-# with 50 steps at 512 x 512
-# its 10s on my 3060 ti (linux)
-# its 6s on my 3080 ti (windows)
-eta_per_image = int(os.environ.get("ETA_PER_IMAGE"))
-
-test_images_fake_eta = 1
-if make_test_images:
-	eta_per_image = test_images_fake_eta
-
 if not make_test_images:
 	import torch
 	from diffusers import LMSDiscreteScheduler
@@ -79,14 +70,15 @@ db = TinyDB(os.path.join(data_path, "db.json"))
 
 # web server api
 
-def progress(id, completed, variations, prompt):
+def progress(id, completed, variations, prompt, percentage):
 	return jsonify(
 	    {
 	        "finished": False,
 	        "id": id,
 	        "completed": completed,
 	        "variations": variations,
-	        "prompt": prompt
+	        "prompt": prompt,
+	        "percentage": percentage
 	    }
 	).data
 
@@ -123,22 +115,23 @@ def generate():
 
 			id = len(db.table("generated").all()) + 1
 
-			yield progress(id, 0, variations, prompt)
+			yield progress(id, 0, variations, prompt, 0)
 
 			if make_test_images:
 				if seed == -1:
 					seed = random.randint(0, 9007199254740991)
 
 				for i in range(0, variations):
-					sleep(test_images_fake_eta)
+					sleep(1)
 
 					image = fakeImage(i, prompt)
 					filename = "id" + str(id) + "_v" + str(i) + ".png"
 					save_path = os.path.join(data_path, filename)
 					image.save(save_path)
 
-					if i < variations - 1:  # dont send last
-						yield progress(id, i + 1, variations, prompt)
+					yield progress(
+					    id, i + 1, variations, prompt, i / variations * 100
+					)
 			else:
 				generator = torch.Generator("cuda")
 				if seed == -1:
@@ -149,18 +142,22 @@ def generate():
 				for i in range(0, variations):
 					with autocast("cuda"):
 
-						# def on_step(step):
-						# 	print(step)
-						# 	yield step
+						def yield_on_step(step):
+							return progress(
+							    id, i, variations, prompt, (
+							        (i / variations) +
+							        (step / inference_steps / variations)
+							    ) * 100
+							)
 
-						result = pipe(
+						result = yield from pipe(
 						    prompt,
 						    generator=generator,
 						    num_inference_steps=inference_steps,
 						    width=width,
 						    height=height,
 						    # guidance_scale=7.5, # 0 to 20
-						    # on_step=on_step
+						    yield_on_step=yield_on_step
 						)
 
 						image = result["sample"][0]
@@ -168,8 +165,10 @@ def generate():
 						save_path = os.path.join(data_path, filename)
 						image.save(save_path)
 
-						if i < variations - 1:  # dont send last
-							yield progress(id, i + 1, variations, prompt)
+						yield progress(
+						    id, i + 1, variations, prompt,
+						    ((i + 1) / variations) * 100
+						)
 
 			data = {
 			    "prompt": prompt,
@@ -211,10 +210,6 @@ def results():
 		results[i]["id"] = i + 1
 	results.reverse()
 	return jsonify(results)
-
-@app.route("/api/etaperimage", methods=["GET"])
-def get_eta_per_image():
-	return jsonify({"etaPerImage": eta_per_image})
 
 @app.route("/api/image/<path:path>")
 def image(path):

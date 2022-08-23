@@ -4,4 +4,5 @@ export interface Progress {
 	completed: number;
 	variations: number;
 	prompt: string;
+	percentage: number;
 }

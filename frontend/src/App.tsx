@@ -28,11 +28,6 @@ export default function App() {
 	const [loading, setLoading] = useState(false);
 	const [areWorkingXTo, setAreWorkingXTo] = useState<string[]>(null);
 
-	const [etaPerImage, setEtaPerImage] = useState<number>(10);
-
-	const [loadingStartTime, setLoadingStartTime] = useState<number>(0);
-	const [loadingEndTime, setLoadingEndTime] = useState<number>(0);
-
 	const [progress, setProgress] = useState<Progress>(null);
 
 	useEffect(() => {
@@ -44,13 +39,6 @@ export default function App() {
 
 	useEffect(() => {
 		refreshResults();
-
-		// get eta per image
-		(async () => {
-			const response = await fetch("/api/etaperimage");
-			const data = await response.json();
-			setEtaPerImage((data ?? {}).etaPerImage ?? 10);
-		})();
 	}, []);
 
 	const promptFormRef = useRef<FormikProps<Prompt>>();
@@ -72,13 +60,8 @@ export default function App() {
 			completed: 0,
 			variations: 0,
 			prompt: "",
+			percentage: 0,
 		});
-
-		const etaInSeconds =
-			(etaPerImage / 50) * inferenceSteps * Consts.variations;
-
-		setLoadingStartTime(Date.now());
-		setLoadingEndTime(Date.now() + etaInSeconds * 1000);
 
 		const body: Prompt = {
 			prompt,
@@ -155,9 +138,8 @@ export default function App() {
 	return (
 		<div>
 			<TopScreenLoadingBar
-				enabled={loading}
-				startTime={loadingStartTime}
-				endTime={loadingEndTime}
+				enabled={loading && progress != null}
+				percentage={progress?.percentage ?? 0}
 			/>
 			<HStack>
 				<Flex

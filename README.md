@@ -22,7 +22,7 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
     `apt-get install nvidia-container-runtime`
 
--   Copy `docker-compose.example.yml` to `docker-compose.yml` and configure it with your **Hugging Face token** and your **ETA for the progress bar** (will automate hopefully)
+-   Copy `docker-compose.example.yml` to `docker-compose.yml` and configure it with your **Hugging Face token**
 
 -   In `server.py` you can find:
 

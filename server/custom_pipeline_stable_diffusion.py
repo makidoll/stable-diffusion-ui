@@ -46,7 +46,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
 	    eta: Optional[float] = 0.0,
 	    generator: Optional[torch.Generator] = None,
 	    output_type: Optional[str] = "pil",
-	    on_step=None,
+	    yield_on_step=None,
 	    **kwargs,
 	):
 		if "torch_device" in kwargs:
@@ -142,8 +142,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
 			extra_step_kwargs["eta"] = eta
 
 		for i, t in tqdm(enumerate(self.scheduler.timesteps)):
-			if on_step != None:
-				on_step(i)
+			if yield_on_step != None:
+				yield yield_on_step(i)
 
 			# expand the latents if we are doing classifier free guidance
 			latent_model_input = torch.cat(
