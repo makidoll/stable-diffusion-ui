@@ -6,11 +6,15 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
 ## Features
 
--   **Progress bar** when generating
--   **Loads images progressively** as it's still generating
+-   **Progress bar** when generating using iterations completed
+-   **Loads images progressively** as it's generating the rest
 -   **Saves all your images** in the sidebar
 -   **Load any** of your previous images and **reproduce exactly**
     -   Then you can carefully **tweak the prompt**
+
+## Todo
+
+-   Cache images and preview images with Flask to reduce bandwidth
 
 ## Installation (for Docker and Linux)
 
