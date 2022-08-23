@@ -14,7 +14,7 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
 ## Todo
 
--   Cache images and preview images with Flask to reduce bandwidth
+-   Cache preview images with Flask to reduce bandwidth
 
 ## Installation (for Docker and Linux)
 
