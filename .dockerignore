@@ -28,3 +28,4 @@ data*
 cache
 docker-compose.yml
 run.bat
+__pycache__

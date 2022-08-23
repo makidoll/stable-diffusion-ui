@@ -24,8 +24,11 @@ if make_test_images:
 
 if not make_test_images:
 	import torch
-	from diffusers import LMSDiscreteScheduler, StableDiffusionPipeline
+	from diffusers import LMSDiscreteScheduler
 	from torch import autocast
+
+	# https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
+	import custom_pipeline_stable_diffusion
 
 if make_test_images:
 
@@ -53,7 +56,7 @@ else:
 	    num_train_timesteps=1000
 	)
 
-	pipe = StableDiffusionPipeline.from_pretrained(
+	pipe = custom_pipeline_stable_diffusion.StableDiffusionPipeline.from_pretrained(
 	    model_id,
 	    scheduler=scheduler,
 	    # revision="fp16",
@@ -63,9 +66,9 @@ else:
 
 # paths, server and database
 
-data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data")
 frontend_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "frontend/dist"
+    os.path.dirname(os.path.abspath(__file__)), "../frontend/dist"
 )
 
 app = Flask(__name__, static_folder=frontend_path, static_url_path="/")
@@ -76,6 +79,17 @@ db = TinyDB(os.path.join(data_path, "db.json"))
 
 # web server api
 
+def progress(id, completed, variations, prompt):
+	return jsonify(
+	    {
+	        "finished": False,
+	        "id": id,
+	        "completed": completed,
+	        "variations": variations,
+	        "prompt": prompt
+	    }
+	).data
+
 generating = False
 
 @app.route("/api/generate", methods=["POST"])
@@ -84,6 +98,7 @@ def generate():
 	if generating:
 		return jsonify({"error": "Busy generating another"}), 400
 
+	@stream_with_context
 	def generate_stream():
 		global generating
 		try:
@@ -108,15 +123,7 @@ def generate():
 
 			id = len(db.table("generated").all()) + 1
 
-			yield jsonify(
-			    {
-			        "finished": False,
-			        "id": id,
-			        "completed": 0,
-			        "variations": variations,
-			        "prompt": prompt
-			    }
-			).data
+			yield progress(id, 0, variations, prompt)
 
 			if make_test_images:
 				if seed == -1:
@@ -131,18 +138,8 @@ def generate():
 					image.save(save_path)
 
 					if i < variations - 1:  # dont send last
-						yield jsonify(
-						    {
-						        "finished": False,
-						        "id": id,
-						        "completed": i + 1,
-						        "variations": variations,
-						        "prompt": prompt
-						    }
-						).data
+						yield progress(id, i + 1, variations, prompt)
 			else:
-				# https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
-
 				generator = torch.Generator("cuda")
 				if seed == -1:
 					seed = generator.seed()
@@ -151,6 +148,11 @@ def generate():
 
 				for i in range(0, variations):
 					with autocast("cuda"):
+
+						# def on_step(step):
+						# 	print(step)
+						# 	yield step
+
 						result = pipe(
 						    prompt,
 						    generator=generator,
@@ -158,6 +160,7 @@ def generate():
 						    width=width,
 						    height=height,
 						    # guidance_scale=7.5, # 0 to 20
+						    # on_step=on_step
 						)
 
 						image = result["sample"][0]
@@ -166,15 +169,7 @@ def generate():
 						image.save(save_path)
 
 						if i < variations - 1:  # dont send last
-							yield jsonify(
-							    {
-							        "finished": False,
-							        "id": id,
-							        "completed": i + 1,
-							        "variations": variations,
-							        "prompt": prompt
-							    }
-							).data
+							yield progress(id, i + 1, variations, prompt)
 
 			data = {
 			    "prompt": prompt,
@@ -207,7 +202,7 @@ def generate():
 			    }
 			).data
 
-	return Response(stream_with_context(generate_stream()))
+	return Response(generate_stream())
 
 @app.route("/api/results", methods=["GET"])
 def results():

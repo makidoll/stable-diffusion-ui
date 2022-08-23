@@ -104,6 +104,8 @@ export default function App() {
 				if (done) break;
 
 				const string = new TextDecoder().decode(value);
+				console.log(string);
+
 				const data: Progress & Result & { error: string } =
 					JSON.parse(string);
 
