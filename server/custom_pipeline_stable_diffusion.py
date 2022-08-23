@@ -5,12 +5,11 @@ from typing import List, Optional, Union, Callable
 import torch
 
 from tqdm.auto import tqdm
-from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
+from transformers import CLIPTextModel, CLIPTokenizer
 
 from diffusers.models import AutoencoderKL, UNet2DConditionModel
 from diffusers.pipeline_utils import DiffusionPipeline
 from diffusers.schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler
-from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 
 class StableDiffusionPipeline(DiffusionPipeline):
 	def __init__(
@@ -20,8 +19,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
 	    tokenizer: CLIPTokenizer,
 	    unet: UNet2DConditionModel,
 	    scheduler: Union[DDIMScheduler, PNDMScheduler, LMSDiscreteScheduler],
-	    safety_checker: StableDiffusionSafetyChecker,
-	    feature_extractor: CLIPFeatureExtractor,
+	    # safety_checker: StableDiffusionSafetyChecker,
+	    # feature_extractor: CLIPFeatureExtractor,
 	):
 		super().__init__()
 		scheduler = scheduler.set_format("pt")
@@ -31,8 +30,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
 		    tokenizer=tokenizer,
 		    unet=unet,
 		    scheduler=scheduler,
-		    safety_checker=safety_checker,
-		    feature_extractor=feature_extractor,
+		    # safety_checker=safety_checker,
+		    # feature_extractor=feature_extractor,
 		)
 
 	@torch.no_grad()
@@ -46,6 +45,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
 	    eta: Optional[float] = 0.0,
 	    generator: Optional[torch.Generator] = None,
 	    output_type: Optional[str] = "pil",
+	    # MAKI CHANGES
+	    # - add yield_on_step here
 	    yield_on_step=None,
 	    **kwargs,
 	):
@@ -142,6 +143,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
 			extra_step_kwargs["eta"] = eta
 
 		for i, t in tqdm(enumerate(self.scheduler.timesteps)):
+			# MAKI CHANGES
+			# - yield here
 			if yield_on_step != None:
 				yield yield_on_step(i)
 
@@ -181,6 +184,11 @@ class StableDiffusionPipeline(DiffusionPipeline):
 
 		image = (image / 2 + 0.5).clamp(0, 1)
 		image = image.cpu().permute(0, 2, 3, 1).numpy()
+
+		# MAKI CHANGES
+		# - comment below
+		# - comment feature_extractor and safety_checker above
+		# - remove imports as well
 
 		# run safety checker
 		# safety_cheker_input = self.feature_extractor(self.numpy_to_pil(image), return_tensors="pt").to(self.device)

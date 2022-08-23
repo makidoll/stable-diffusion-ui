@@ -15,8 +15,6 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 ## Todo
 
 -   Make gifs for the readme
--   Label changes in custom stable diffusion pipeline
--   Stop safety checkers from loading
 
 ## Installation (for Docker and Linux)
 
