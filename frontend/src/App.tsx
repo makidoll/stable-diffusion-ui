@@ -4,12 +4,14 @@ import {
 	Grid,
 	Heading,
 	HStack,
+	IconButton,
 	Image,
 	Text,
 	useToast,
 } from "@chakra-ui/react";
 import { FormikProps } from "formik";
 import { useEffect, useRef, useState } from "react";
+import { MdRefresh } from "react-icons/md";
 import { Consts } from "./consts";
 import { Prompt } from "./interfaces/Prompt";
 import { Result } from "./interfaces/Result";
@@ -183,12 +185,27 @@ export default function App() {
 						overflow="scroll"
 					>
 						<Box padding={4}>
-							<Heading size={"md"}>Last prompts</Heading>
-							<Text fontWeight={500}>
-								{`${results.length} ${
-									results.length == 1 ? "picture" : "pictures"
-								} generated`}
-							</Text>
+							<Flex flexDirection={"row"} w="100%">
+								<Box flexGrow={1}>
+									<Heading size={"md"}>Last prompts</Heading>
+									<Text fontWeight={500}>
+										{`${results.length} ${
+											results.length == 1
+												? "picture"
+												: "pictures"
+										} generated`}
+									</Text>
+								</Box>
+								<IconButton
+									fontSize={24}
+									variant="ghost"
+									aria-label="Refresh"
+									icon={<MdRefresh />}
+									onClick={() => {
+										refreshResults();
+									}}
+								/>
+							</Flex>
 							{results.map(result => (
 								<PreviousResults
 									key={result.id}
