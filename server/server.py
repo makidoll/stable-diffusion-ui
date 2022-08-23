@@ -6,9 +6,13 @@ from pathlib import Path
 from time import sleep
 from urllib import request
 
-from flask import Flask, jsonify, request, send_file, send_from_directory, stream_with_context, Response
+from flask import (
+    Flask, Response, jsonify, request, send_file, send_from_directory,
+    stream_with_context
+)
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
+from waitress import serve
 
 # DEV=1 python3 server.py
 make_test_images = os.environ.get("DEV") == "1"
@@ -257,4 +261,5 @@ def catch_all(path):
 # dont run flask cli
 
 if __name__ == "__main__":
-	app.run(debug=False, port=5000, host="0.0.0.0")
+	print("Server running at http://127.0.0.1:5000")
+	serve(app, port=5000, host="0.0.0.0", threads=16)

@@ -15,7 +15,6 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 ## Todo
 
 -   Cache preview images with Flask to reduce bandwidth
--   Use waitress with Flask- https://flask.palletsprojects.com/en/2.2.x/deploying/waitress/
 -   Make gifs for the readme
 -   Label changes in custom stable diffusion pipeline
 -   Env var for fp16
