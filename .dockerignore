@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 # Maki
-data
+data*
 cache
 docker-compose.yml
 run.bat

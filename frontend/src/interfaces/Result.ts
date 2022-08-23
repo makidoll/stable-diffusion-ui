@@ -1,5 +1,5 @@
 export interface Result {
-	id: string;
+	id: number;
 	prompt: string;
 	seed: number;
 	inferenceSteps: number;

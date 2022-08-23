@@ -36,13 +36,13 @@ export default function ImageResult(props: {
 	src: string;
 	prompt: string;
 	height: string;
-	loadingWithAreWorkingXTo?: string;
+	areWorkingXTo?: string;
 }) {
 	const [downloading, setDownloading] = useState(false);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	return (
 		<Flex w="100%" flexDirection={"column"} alignItems={"center"}>
-			{props.loadingWithAreWorkingXTo ? (
+			{props.src == "" ? (
 				<Box
 					h={props.height}
 					style={{ aspectRatio: "1 / 1" }}
@@ -74,7 +74,7 @@ export default function ImageResult(props: {
 						<Text textAlign="center" w="70%" opacity="0.5">
 							The foxes, squirrels and sharks are working{" "}
 							<span style={{ fontWeight: "700" }}>
-								{props.loadingWithAreWorkingXTo}
+								{props.areWorkingXTo}
 							</span>{" "}
 							to make your picture!
 						</Text>

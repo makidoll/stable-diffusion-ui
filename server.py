@@ -6,7 +6,7 @@ from pathlib import Path
 from time import sleep
 from urllib import request
 
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory, stream_with_context, Response
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
 
@@ -75,77 +75,130 @@ def generate():
 	if generating:
 		return jsonify({"error": "Busy generating another"}), 400
 
-	try:
-		generating = True
+	def generate_stream():
+		global generating
+		try:
+			generating = True
 
-		variations = 3
+			variations = 3
 
-		prompt = request.json["prompt"]
-		seed = int(request.json["seed"])
-		inference_steps = int(request.json["inferenceSteps"])
-		width = int(request.json["width"])
-		height = int(request.json["height"])
+			prompt = request.json["prompt"]
+			seed = int(request.json["seed"])
+			inference_steps = int(request.json["inferenceSteps"])
+			width = int(request.json["width"])
+			height = int(request.json["height"])
 
-		if inference_steps > 150:
-			generating = False
-			return jsonify(
-			    {"error": "Please don't do more than 150 inference steps"}
-			), 400
+			if inference_steps > 150:
+				generating = False
+				yield jsonify(
+				    {
+				        "error": "Please don't do more than 150 inference steps"
+				    }
+				).data
+				return
 
-		images = []
+			id = len(db.table("generated").all()) + 1
 
-		if make_test_images:
-			if seed == -1:
-				seed = random.randint(0, 9007199254740991)
+			yield jsonify(
+			    {
+			        "finished": False,
+			        "id": id,
+			        "completed": 0,
+			        "variations": variations,
+			        "prompt": prompt
+			    }
+			).data
 
-			for i in range(0, variations):
-				sleep(1)
-				images.append(fakeImage(i, prompt))
-		else:
-			generator = torch.Generator("cuda")
-			if seed == -1:
-				seed = generator.seed()
+			if make_test_images:
+				if seed == -1:
+					seed = random.randint(0, 9007199254740991)
+
+				for i in range(0, variations):
+					sleep(1)
+
+					image = fakeImage(i, prompt)
+					filename = "id" + str(id) + "_v" + str(i) + ".png"
+					save_path = os.path.join(data_path, filename)
+					image.save(save_path)
+
+					if i < variations - 1:  # dont send last
+						yield jsonify(
+						    {
+						        "finished": False,
+						        "id": id,
+						        "completed": i + 1,
+						        "variations": variations,
+						        "prompt": prompt
+						    }
+						).data
 			else:
-				generator = generator.manual_seed(seed)
+				# https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
 
-			for i in range(0, variations):
-				with autocast("cuda"):
-					result = pipe(
-					    prompt,
-					    generator=generator,
-					    num_inference_steps=inference_steps,
-					    width=width,
-					    height=height,
-					)
-					images.append(result["sample"][0])
+				generator = torch.Generator("cuda")
+				if seed == -1:
+					seed = generator.seed()
+				else:
+					generator = generator.manual_seed(seed)
 
-		data = {
-		    "prompt": prompt,
-		    "seed": seed,
-		    "inferenceSteps": inference_steps,
-		    "width": width,
-		    "height": height,
-		    # other
-		    "variations": len(images),
-		    "created": datetime.datetime.utcnow().isoformat() + "Z"
-		}
+				for i in range(0, variations):
+					with autocast("cuda"):
+						result = pipe(
+						    prompt,
+						    generator=generator,
+						    num_inference_steps=inference_steps,
+						    width=width,
+						    height=height,
+						    # guidance_scale=7.5, # 0 to 20
+						)
 
-		id = db.table("generated").insert(data)
-		data["id"] = id
+						image = result["sample"][0]
+						filename = "id" + str(id) + "_v" + str(i) + ".png"
+						save_path = os.path.join(data_path, filename)
+						image.save(save_path)
 
-		for v in range(0, len(images)):
-			filename = "id" + str(id) + "_v" + str(v) + ".png"
-			save_path = os.path.join(data_path, filename)
-			images[v].save(save_path)
+						if i < variations - 1:  # dont send last
+							yield jsonify(
+							    {
+							        "finished": False,
+							        "id": id,
+							        "completed": i + 1,
+							        "variations": variations,
+							        "prompt": prompt
+							    }
+							).data
 
-		generating = False
+			data = {
+			    "prompt": prompt,
+			    "seed": seed,
+			    "inferenceSteps": inference_steps,
+			    "width": width,
+			    "height": height,
+			    # other
+			    "variations": variations,
+			    "created": datetime.datetime.utcnow().isoformat() + "Z"
+			}
 
-		return jsonify(data)
+			# should be the same as id but this is more correct
+			id = db.table("generated").insert(data)
 
-	except Exception as e:
-		generating = False
-		print(e)
-		return jsonify({"error": "Something went wrong, try again soon"})
+			# add to response
+			data["finished"] = True
+			data["id"] = id
+
+			generating = False
+
+			yield jsonify(data).data
+
+		except Exception as e:
+			generating = False
+			print(e)
+			yield jsonify(
+			    {
+			        "error": "Something went wrong, try again soon"
+			    }
+			).data
+
+	return Response(stream_with_context(generate_stream()))
 
 @app.route("/api/results", methods=["GET"])
 def results():

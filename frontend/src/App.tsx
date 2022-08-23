@@ -13,6 +13,7 @@ import { FormikProps } from "formik";
 import { useEffect, useRef, useState } from "react";
 import { MdRefresh } from "react-icons/md";
 import { Consts } from "./consts";
+import { Progress } from "./interfaces/Progress";
 import { Prompt } from "./interfaces/Prompt";
 import { Result } from "./interfaces/Result";
 import { useResultsStore } from "./state/Results";
@@ -25,14 +26,15 @@ import { getResultImageUrls } from "./utils/getResultImageUrls";
 
 export default function App() {
 	const [loading, setLoading] = useState(false);
-	const [loadingWithAreWorkingXTo, setLoadingWithAreWorkingXTo] =
-		useState<string[]>(null);
+	const [areWorkingXTo, setAreWorkingXTo] = useState<string[]>(null);
 
 	const [loadingStartTime, setLoadingStartTime] = useState<number>(0);
 	const [loadingEndTime, setLoadingEndTime] = useState<number>(0);
 
+	const [progress, setProgress] = useState<Progress>(null);
+
 	useEffect(() => {
-		setLoadingWithAreWorkingXTo(loading ? getRandomAreWorkingXTo(6) : null);
+		setAreWorkingXTo(loading ? getRandomAreWorkingXTo(6) : null);
 	}, [loading]);
 
 	const [result, setResult] = useState<Result>(null);
@@ -54,6 +56,14 @@ export default function App() {
 		height,
 	}: Prompt) => {
 		setLoading(true);
+
+		setProgress({
+			finished: false,
+			id: null,
+			completed: 0,
+			variations: 0,
+			prompt: "",
+		});
 
 		const etaInSeconds =
 			(Consts.etaPerImage / 50) * inferenceSteps * Consts.variations;
@@ -77,22 +87,42 @@ export default function App() {
 			},
 		});
 
-		const result = await response.json();
+		const reader = response.body.getReader();
+
+		while (true) {
+			try {
+				const { value, done } = await reader.read();
+				if (done) break;
+
+				const string = new TextDecoder().decode(value);
+				const data: Progress & Result & { error: string } =
+					JSON.parse(string);
+
+				if (data.error) {
+					// show error
+					toast({
+						title: data.error,
+						status: "error",
+						isClosable: true,
+						position: "top-left",
+					});
+				}
+
+				if (data.finished) {
+					setResult(data);
+					refreshResults();
+				} else {
+					setProgress(data);
+				}
+
+				console.log(data);
+			} catch (error) {
+				console.error(error);
+			}
+		}
 
 		setLoading(false);
-
-		if (result.error) {
-			// show error
-			toast({
-				title: result.error,
-				status: "error",
-				isClosable: true,
-				position: "top-left",
-			});
-		} else {
-			setResult(result);
-			refreshResults();
-		}
+		setProgress(null);
 	};
 
 	const onSidebarResultClick = (result: Result) => {
@@ -111,7 +141,6 @@ export default function App() {
 		});
 	};
 
-	// TODO: add loading back in with eta per image
 	return (
 		<div>
 			<TopScreenLoadingBar
@@ -157,19 +186,18 @@ export default function App() {
 							// justifyContent={"flex-start"}
 							gap={2}
 						>
-							{(loading
-								? new Array(Consts.variations).fill("")
-								: getResultImageUrls(result)
-							).map((src, i) => (
+							{getResultImageUrls(
+								loading ? progress : result,
+							).map(({ src, prompt }, i) => (
 								<ImageResult
 									key={i}
-									prompt={loading ? "" : result.prompt}
+									prompt={prompt}
 									src={src}
 									// height="41.5vh"
 									height="44vh"
-									loadingWithAreWorkingXTo={
-										loading && loadingWithAreWorkingXTo
-											? loadingWithAreWorkingXTo[i]
+									areWorkingXTo={
+										loading && areWorkingXTo
+											? areWorkingXTo[i]
 											: null
 									}
 								/>

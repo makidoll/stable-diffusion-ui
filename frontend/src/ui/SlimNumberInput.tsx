@@ -24,12 +24,13 @@ export default function SlimNumberInput(props: {
 	width?: number;
 	tooltip?: string;
 }) {
+	const size = "sm";
 	const slimNumberInput = (
 		<Flex flexDirection={"row"}>
 			{props.field.value != props.default ? (
 				<Button
 					colorScheme={"red"}
-					size="xs"
+					size={size}
 					leftIcon={props.icon}
 					onClick={() => {
 						props.form.setFieldValue(
@@ -52,11 +53,11 @@ export default function SlimNumberInput(props: {
 				step={1}
 				min={props.min}
 				max={props.max}
-				size="xs"
+				size={size}
 				width={props.width ?? 250}
 				disabled={props.disabled}
 			>
-				<InputGroup size="xs">
+				<InputGroup size={size}>
 					<InputLeftAddon children={props.name} />
 					<NumberInputField borderRightRadius={4} />
 					<NumberInputStepper>
