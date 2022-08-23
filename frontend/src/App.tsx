@@ -87,7 +87,6 @@ export default function App() {
 				if (done) break;
 
 				const string = new TextDecoder().decode(value);
-				console.log(string);
 
 				const data: Progress & Result & { error: string } =
 					JSON.parse(string);
@@ -108,8 +107,6 @@ export default function App() {
 				} else {
 					setProgress(data);
 				}
-
-				console.log(data);
 			} catch (error) {
 				console.error(error);
 			}
