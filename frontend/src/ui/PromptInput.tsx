@@ -5,7 +5,7 @@ import { MutableRefObject } from "react";
 import { BsBarChartSteps } from "react-icons/bs";
 import { FaSeedling } from "react-icons/fa";
 import { MdCloud } from "react-icons/md";
-import { TbArrowAutofitHeight, TbArrowAutofitWidth } from "react-icons/tb";
+import { TbArrowsHorizontal, TbArrowsVertical } from "react-icons/tb";
 import { Consts } from "../consts";
 import { Prompt } from "../interfaces/Prompt";
 import { Result } from "../interfaces/Result";
@@ -49,7 +49,7 @@ export default function PromptInput(props: {
 										<SlimNumberInput
 											name={"Seed"}
 											min={-1}
-											max={Number.MAX_SAFE_INTEGER}
+											max={Number.MAX_VALUE}
 											default={Consts.promptDefaults.seed}
 											icon={<FaSeedling />}
 											field={field}
@@ -65,6 +65,7 @@ export default function PromptInput(props: {
 											name={"Inf. Steps"}
 											min={1}
 											max={150}
+											step={1}
 											default={
 												Consts.promptDefaults
 													.inferenceSteps
@@ -73,10 +74,11 @@ export default function PromptInput(props: {
 											field={field}
 											form={form}
 											disabled={isSubmitting}
-											width={180}
+											width={90}
 											tooltip={
 												"50 works best, but 150 for highest detail"
 											}
+											slider
 										/>
 									)}
 								</Field>
@@ -86,14 +88,17 @@ export default function PromptInput(props: {
 											name={"Width"}
 											min={256}
 											max={768}
+											step={128}
 											default={
 												Consts.promptDefaults.width
 											}
-											icon={<TbArrowAutofitWidth />}
+											icon={<TbArrowsHorizontal />}
 											field={field}
 											form={form}
 											disabled={isSubmitting}
-											width={150}
+											width={90}
+											slider
+											prefix={"px"}
 										/>
 									)}
 								</Field>
@@ -103,14 +108,17 @@ export default function PromptInput(props: {
 											name={"Height"}
 											min={256}
 											max={768}
+											step={128}
 											default={
 												Consts.promptDefaults.height
 											}
-											icon={<TbArrowAutofitHeight />}
+											icon={<TbArrowsVertical />}
 											field={field}
 											form={form}
 											disabled={isSubmitting}
-											width={150}
+											width={90}
+											slider
+											prefix={"px"}
 										/>
 									)}
 								</Field>
