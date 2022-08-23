@@ -11,6 +11,7 @@
 		"@chakra-ui/react": "^2.2.8",
 		"@emotion/react": "^11",
 		"@emotion/styled": "^11",
+		"@fontsource/inter": "^4.5.12",
 		"date-fns": "^2.29.2",
 		"formik": "^2.2.9",
 		"framer-motion": "^6",
