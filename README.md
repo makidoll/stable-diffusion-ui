@@ -16,6 +16,8 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
 -   Cache preview images with Flask to reduce bandwidth
 
+-   Use waitress with Flask- https://flask.palletsprojects.com/en/2.2.x/deploying/waitress/
+
 ## Installation (for Docker and Linux)
 
 -   Install Docker and Nvidia Container Runtime
