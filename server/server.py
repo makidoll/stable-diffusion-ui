@@ -72,18 +72,6 @@ db = TinyDB(os.path.join(data_path, "db.json"))
 
 # web server api
 
-def progress(id, completed, variations, prompt, percentage):
-	return jsonify(
-	    {
-	        "finished": False,
-	        "id": id,
-	        "completed": completed,
-	        "variations": variations,
-	        "prompt": prompt,
-	        "percentage": percentage
-	    }
-	).data
-
 generating = False
 
 @app.route("/api/generate", methods=["POST"])
@@ -117,7 +105,15 @@ def generate():
 
 			id = len(db.table("generated").all()) + 1
 
-			yield progress(id, 0, variations, prompt, 0)
+			yield jsonify(
+			    {
+			        "id": id,
+			        "completed": 0,
+			        "variations": variations,
+			        "prompt": prompt,
+			        "percentage": 0
+			    }
+			).data
 
 			if make_test_images:
 				if seed == -1:
@@ -131,9 +127,12 @@ def generate():
 					save_path = os.path.join(data_path, filename)
 					image.save(save_path)
 
-					yield progress(
-					    id, i + 1, variations, prompt, i / variations * 100
-					)
+					yield jsonify(
+					    {
+					        "completed": i + 1,
+					        "percentage": ((i + 1) / variations) * 100
+					    }
+					).data
 			else:
 				generator = torch.Generator("cuda")
 				if seed == -1:
@@ -145,12 +144,17 @@ def generate():
 					with autocast("cuda"):
 
 						def yield_on_step(step):
-							return progress(
-							    id, i, variations, prompt, (
-							        (i / variations) +
-							        (step / inference_steps / variations)
-							    ) * 100
-							)
+							return jsonify(
+							    {
+							        "percentage":
+							            (
+							                (i / variations) + (
+							                    step / inference_steps /
+							                    variations
+							                )
+							            ) * 100
+							    }
+							).data
 
 						result = yield from pipe(
 						    prompt,
@@ -167,10 +171,12 @@ def generate():
 						save_path = os.path.join(data_path, filename)
 						image.save(save_path)
 
-						yield progress(
-						    id, i + 1, variations, prompt,
-						    ((i + 1) / variations) * 100
-						)
+						yield jsonify(
+						    {
+						        "completed": i + 1,
+						        "percentage": ((i + 1) / variations) * 100
+						    }
+						).data
 
 			data = {
 			    "prompt": prompt,

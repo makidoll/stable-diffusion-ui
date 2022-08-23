@@ -105,7 +105,7 @@ export default function App() {
 					setResult(data);
 					refreshResults();
 				} else {
-					setProgress(data);
+					setProgress(progress => ({ ...progress, ...data }));
 				}
 			} catch (error) {
 				console.error(error);

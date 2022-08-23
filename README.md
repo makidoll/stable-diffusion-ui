@@ -16,11 +16,10 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
 -   Cache preview images with Flask to reduce bandwidth
 -   Use waitress with Flask- https://flask.palletsprojects.com/en/2.2.x/deploying/waitress/
--   Send/stream only necessary progress data, then merge state in UI to reduce bandwidth 
 -   Make gifs for the readme
 -   Label changes in custom stable diffusion pipeline
 -   Env var for fp16
--   Stop safety checkers from loading 
+-   Stop safety checkers from loading
 
 ## Installation (for Docker and Linux)
 
