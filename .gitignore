@@ -27,3 +27,4 @@ dist-ssr
 data
 cache
 docker-compose.yml
+run.bat
