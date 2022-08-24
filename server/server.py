@@ -1,3 +1,4 @@
+import base64
 import datetime
 import hashlib
 import os
@@ -209,7 +210,7 @@ def generate():
 
 		except Exception as e:
 			generating = False
-			print(e)
+			print(repr(e))
 			yield jsonify(
 			    {
 			        "error": "Something went wrong, try again soon"
@@ -217,6 +218,101 @@ def generate():
 			).data
 
 	return Response(generate_stream())
+
+@app.route("/api/generate/oneoff", methods=["POST"])
+def generate_oneoff():
+	global generating
+	if generating:
+		return jsonify({"error": "Busy generating another"}), 400
+
+	@stream_with_context
+	def generate_oneoff_stream():
+		global generating
+		generating = True
+
+		variations = 3
+
+		try:
+			prompt = request.json["prompt"]
+			seed = int(request.json["seed"])
+			inference_steps = int(request.json["inferenceSteps"])
+			width = int(request.json["width"])
+			height = int(request.json["height"])
+
+			if inference_steps > 150:
+				generating = False
+				yield jsonify(
+				    {
+				        "error": "Please don't do more than 150 inference steps"
+				    }
+				).data
+
+			images = []
+
+			if make_test_images:
+				if seed == -1:
+					seed = random.randint(0, 9007199254740991)
+
+				for i in range(0, variations):
+					sleep(1)
+
+					images.append(fakeImage(i, prompt))
+
+			else:
+				generator = torch.Generator("cuda")
+				if seed == -1:
+					seed = generator.seed()
+				else:
+					generator = generator.manual_seed(seed)
+
+				for i in range(0, variations):
+					with autocast("cuda"):
+						result = yield from pipe(
+						    prompt,
+						    generator=generator,
+						    num_inference_steps=inference_steps,
+						    width=width,
+						    height=height,
+						    # guidance_scale=7.5, # 0 to 20
+						)
+
+						images.append(result["sample"][0])
+
+			images_as_base64 = []
+
+			for image in images:
+				image_io = BytesIO()
+				image.save(image_io, "PNG")
+				image_io.seek(0)
+				images_as_base64.append(
+				    "data:image/png;base64," +
+				    str(base64.b64encode(image_io.read()))
+				)
+
+			data = {
+			    "prompt": prompt,
+			    "seed": seed,
+			    "inferenceSteps": inference_steps,
+			    "width": width,
+			    "height": height,
+			    # other
+			    "variations": variations,
+			    "images": images_as_base64
+			}
+
+			generating = False
+
+			yield jsonify(data).data
+		except Exception as e:
+			generating = False
+			print(repr(e))
+			yield jsonify(
+			    {
+			        "error": "Something went wrong, try again soon"
+			    }
+			).data
+
+	return Response(generate_oneoff_stream())
 
 @app.route("/api/results", methods=["GET"])
 def results():
