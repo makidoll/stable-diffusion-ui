@@ -119,9 +119,11 @@ export default function SlimNumberInput(props: {
 		</Flex>
 	);
 
-	return props.tooltip ? (
-		<Tooltip label={props.tooltip}>{slimNumberInput}</Tooltip>
-	) : (
-		slimNumberInput
-	);
+	// return props.tooltip ? (
+	// 	<Tooltip label={props.tooltip}>{slimNumberInput}</Tooltip>
+	// ) : (
+	// 	slimNumberInput
+	// );
+
+	return slimNumberInput;
 }
