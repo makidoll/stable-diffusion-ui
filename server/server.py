@@ -286,7 +286,7 @@ def generate_oneoff():
 				image_io.seek(0)
 				images_as_base64.append(
 				    "data:image/png;base64," +
-				    str(base64.b64encode(image_io.read()))
+				    base64.b64encode(image_io.read()).decode("ascii")
 				)
 
 			data = {
