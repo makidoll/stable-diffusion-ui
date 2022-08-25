@@ -99,7 +99,7 @@ def generate():
 			prompt = request.json["prompt"]
 			seed = int(request.json["seed"])
 			inference_steps = int(request.json["inferenceSteps"])
-			guidance_scale = int(request.json["guidanceScale"])
+			guidance_scale = float(request.json["guidanceScale"])
 			width = int(request.json["width"])
 			height = int(request.json["height"])
 
@@ -238,7 +238,7 @@ def generate_oneoff():
 			prompt = request.json["prompt"]
 			seed = int(request.json["seed"])
 			inference_steps = int(request.json["inferenceSteps"])
-			# guidance_scale = int(request.json["guidanceScale"])
+			# guidance_scale = float(request.json["guidanceScale"])
 			width = int(request.json["width"])
 			height = int(request.json["height"])
 
