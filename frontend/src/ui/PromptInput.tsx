@@ -1,4 +1,13 @@
-import { Badge, Box, Button, HStack, Input, VStack } from "@chakra-ui/react";
+import {
+	Badge,
+	Box,
+	Button,
+	Flex,
+	HStack,
+	Input,
+	Tooltip,
+	VStack,
+} from "@chakra-ui/react";
 import { formatRelative } from "date-fns";
 import { Field, Form, Formik, FormikProps } from "formik";
 import { MutableRefObject } from "react";
@@ -43,108 +52,121 @@ export default function PromptInput(props: {
 									/>
 								)}
 							</Field>
-							<HStack w="100%">
-								<Field name="seed">
-									{({ field, form }) => (
-										<SlimNumberInput
-											name={"Seed"}
-											min={-1}
-											max={Number.MAX_VALUE}
-											default={Consts.promptDefaults.seed}
-											icon={<FaSeedling />}
-											field={field}
-											form={form}
-											disabled={isSubmitting}
-											width={200}
-										/>
-									)}
-								</Field>
-								<Field name="inferenceSteps">
-									{({ field, form }) => (
-										<SlimNumberInput
-											name={"Inf. Steps"}
-											min={1}
-											max={150}
-											step={1}
-											default={
-												Consts.promptDefaults
-													.inferenceSteps
-											}
-											icon={<BsBarChartSteps />}
-											field={field}
-											form={form}
-											disabled={isSubmitting}
-											width={90}
-											tooltip={
-												"50 works best, but 150 for highest detail"
-											}
-											slider
-										/>
-									)}
-								</Field>
-								<Field name="guidanceScale">
-									{({ field, form }) => (
-										<SlimNumberInput
-											name={"Cfg Scale"}
-											min={0}
-											max={20}
-											step={0.5}
-											default={
-												Consts.promptDefaults
-													.guidanceScale
-											}
-											icon={<FaBalanceScaleLeft />}
-											field={field}
-											form={form}
-											disabled={isSubmitting}
-											width={90}
-											tooltip={
-												"How similar it'll be to your prompt, higher is closer"
-											}
-											slider
-										/>
-									)}
-								</Field>
-								<Field name="width">
-									{({ field, form }) => (
-										<SlimNumberInput
-											name={"Width"}
-											min={256}
-											max={768}
-											step={128}
-											default={
-												Consts.promptDefaults.width
-											}
-											icon={<TbArrowsHorizontal />}
-											field={field}
-											form={form}
-											disabled={isSubmitting}
-											width={90}
-											slider
-											prefix={"px"}
-										/>
-									)}
-								</Field>
-								<Field name="height">
-									{({ field, form }) => (
-										<SlimNumberInput
-											name={"Height"}
-											min={256}
-											max={768}
-											step={128}
-											default={
-												Consts.promptDefaults.height
-											}
-											icon={<TbArrowsVertical />}
-											field={field}
-											form={form}
-											disabled={isSubmitting}
-											width={90}
-											slider
-											prefix={"px"}
-										/>
-									)}
-								</Field>
+							<Flex w="100%" flexDirection={"row"}>
+								<Flex flexDirection={"column"}>
+									<HStack mb={2}>
+										<Field name="seed">
+											{({ field, form }) => (
+												<SlimNumberInput
+													name={"Seed"}
+													min={-1}
+													max={Number.MAX_VALUE}
+													default={
+														Consts.promptDefaults
+															.seed
+													}
+													icon={FaSeedling}
+													field={field}
+													form={form}
+													disabled={isSubmitting}
+													width={250}
+												/>
+											)}
+										</Field>
+										<Tooltip label="50 works best, but 150 for highest detail">
+											<Field name="inferenceSteps">
+												{({ field, form }) => (
+													<SlimNumberInput
+														name={"Inf. Steps"}
+														min={1}
+														max={150}
+														step={1}
+														default={
+															Consts
+																.promptDefaults
+																.inferenceSteps
+														}
+														icon={BsBarChartSteps}
+														field={field}
+														form={form}
+														disabled={isSubmitting}
+														width={90}
+														slider
+													/>
+												)}
+											</Field>
+										</Tooltip>
+										<Tooltip label="How similar it'll be to your prompt, higher is closer">
+											<Field name="guidanceScale">
+												{({ field, form }) => (
+													<SlimNumberInput
+														name={"Cfg Scale"}
+														min={0}
+														max={20}
+														step={0.5}
+														default={
+															Consts
+																.promptDefaults
+																.guidanceScale
+														}
+														icon={
+															FaBalanceScaleLeft
+														}
+														field={field}
+														form={form}
+														disabled={isSubmitting}
+														width={90}
+														slider
+													/>
+												)}
+											</Field>
+										</Tooltip>
+									</HStack>
+									<HStack>
+										<Field name="width">
+											{({ field, form }) => (
+												<SlimNumberInput
+													name={"Width"}
+													min={256}
+													max={768}
+													step={128}
+													default={
+														Consts.promptDefaults
+															.width
+													}
+													icon={TbArrowsHorizontal}
+													field={field}
+													form={form}
+													disabled={isSubmitting}
+													width={90}
+													slider
+													prefix={"px"}
+												/>
+											)}
+										</Field>
+										<Field name="height">
+											{({ field, form }) => (
+												<SlimNumberInput
+													name={"Height"}
+													min={256}
+													max={768}
+													step={128}
+													default={
+														Consts.promptDefaults
+															.height
+													}
+													icon={TbArrowsVertical}
+													field={field}
+													form={form}
+													disabled={isSubmitting}
+													width={90}
+													slider
+													prefix={"px"}
+												/>
+											)}
+										</Field>
+									</HStack>
+								</Flex>
 								<Box flexGrow={1}></Box>
 								{props.resultForDisplay ? (
 									<Box pr={2}>
@@ -161,7 +183,7 @@ export default function PromptInput(props: {
 								<Button
 									leftIcon={<MdCloud />}
 									colorScheme="pink"
-									size="sm"
+									size="md"
 									type="submit"
 									loadingText="Dreaming"
 									isLoading={isSubmitting}
@@ -169,7 +191,7 @@ export default function PromptInput(props: {
 								>
 									Dream
 								</Button>
-							</HStack>
+							</Flex>
 						</VStack>
 					</Form>
 				);

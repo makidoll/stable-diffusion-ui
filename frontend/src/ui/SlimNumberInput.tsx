@@ -2,6 +2,7 @@ import {
 	Box,
 	Button,
 	Flex,
+	Icon,
 	InputGroup,
 	InputLeftAddon,
 	InputRightAddon,
@@ -12,21 +13,19 @@ import {
 	NumberInputStepper,
 	Slider,
 	SliderFilledTrack,
-	SliderMark,
 	SliderThumb,
 	SliderTrack,
-	Text,
 	Tooltip,
 } from "@chakra-ui/react";
-import { ReactElement } from "react";
-import { Md10K } from "react-icons/md";
+import { IconType } from "react-icons";
+import { BiReset } from "react-icons/bi";
 
 export default function SlimNumberInput(props: {
 	name: string;
 	min: number;
 	max: number;
 	default: number;
-	icon: ReactElement;
+	icon: IconType;
 	field: any;
 	form: any;
 	disabled?: boolean;
@@ -37,13 +36,17 @@ export default function SlimNumberInput(props: {
 	prefix?: string;
 }) {
 	const size = "sm";
+	const showReset = props.field.value != props.default;
 	const slimNumberInput = (
 		<Flex flexDirection={"row"}>
 			{props.slider ? (
 				<>
 					<InputGroup size={size}>
-						<InputLeftAddon>{props.name}</InputLeftAddon>
-						<Box borderWidth={1} px={2}>
+						<InputLeftAddon borderLeftRadius={4}>
+							<Icon mr={2} as={props.icon} />
+							{props.name}
+						</InputLeftAddon>
+						<Box borderWidth={1} px={3}>
 							<Box mt={1}>
 								<Slider
 									{...props.field}
@@ -68,7 +71,10 @@ export default function SlimNumberInput(props: {
 								</Slider>
 							</Box>
 						</Box>
-						<InputRightAddon fontWeight={600}>
+						<InputRightAddon
+							fontWeight={600}
+							borderRightRadius={showReset ? 0 : 4}
+						>
 							{props.field.value +
 								(props.prefix ? " " + props.prefix : "")}
 						</InputRightAddon>
@@ -88,8 +94,16 @@ export default function SlimNumberInput(props: {
 					disabled={props.disabled}
 				>
 					<InputGroup size={size}>
-						<InputLeftAddon children={props.name} />
-						<NumberInputField />
+						<InputLeftAddon borderLeftRadius={4}>
+							<Icon mr={2} as={props.icon} />
+							{props.name}
+						</InputLeftAddon>
+						<Box>
+							<NumberInputField
+								borderRadius={0}
+								borderRightRadius={showReset ? 0 : 4}
+							/>
+						</Box>
 						<NumberInputStepper>
 							<NumberIncrementStepper />
 							<NumberDecrementStepper />
@@ -97,11 +111,10 @@ export default function SlimNumberInput(props: {
 					</InputGroup>
 				</NumberInput>
 			)}
-			{props.field.value != props.default ? (
+			{showReset ? (
 				<Button
 					colorScheme={"red"}
 					size={size}
-					leftIcon={props.icon}
 					onClick={() => {
 						props.form.setFieldValue(
 							props.field.name,
@@ -109,9 +122,10 @@ export default function SlimNumberInput(props: {
 						);
 					}}
 					disabled={props.disabled}
-					ml={props.slider ? -3 : 0}
+					ml={props.slider ? -2 : 0}
 					borderLeftRadius={0}
-					borderRightRadius={3}
+					borderRightRadius={4}
+					fontSize={12}
 				>
 					Reset
 				</Button>
@@ -119,9 +133,5 @@ export default function SlimNumberInput(props: {
 		</Flex>
 	);
 
-	return props.tooltip ? (
-		<Tooltip label={props.tooltip}>{slimNumberInput}</Tooltip>
-	) : (
-		slimNumberInput
-	);
+	return slimNumberInput;
 }
