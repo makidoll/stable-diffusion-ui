@@ -49,6 +49,7 @@ export default function App() {
 		prompt,
 		seed,
 		inferenceSteps,
+		guidanceScale,
 		width,
 		height,
 	}: Prompt) => {
@@ -67,6 +68,7 @@ export default function App() {
 			prompt,
 			seed: Number(seed),
 			inferenceSteps: Number(inferenceSteps),
+			guidanceScale: Number(guidanceScale),
 			width: Number(width),
 			height: Number(height),
 		};

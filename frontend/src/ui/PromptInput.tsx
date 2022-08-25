@@ -3,7 +3,7 @@ import { formatRelative } from "date-fns";
 import { Field, Form, Formik, FormikProps } from "formik";
 import { MutableRefObject } from "react";
 import { BsBarChartSteps } from "react-icons/bs";
-import { FaSeedling } from "react-icons/fa";
+import { FaBalanceScaleLeft, FaSeedling } from "react-icons/fa";
 import { MdCloud } from "react-icons/md";
 import { TbArrowsHorizontal, TbArrowsVertical } from "react-icons/tb";
 import { Consts } from "../consts";
@@ -77,6 +77,29 @@ export default function PromptInput(props: {
 											width={90}
 											tooltip={
 												"50 works best, but 150 for highest detail"
+											}
+											slider
+										/>
+									)}
+								</Field>
+								<Field name="guidanceScale">
+									{({ field, form }) => (
+										<SlimNumberInput
+											name={"Cfg Scale"}
+											min={0}
+											max={20}
+											step={0.5}
+											default={
+												Consts.promptDefaults
+													.guidanceScale
+											}
+											icon={<FaBalanceScaleLeft />}
+											field={field}
+											form={form}
+											disabled={isSubmitting}
+											width={90}
+											tooltip={
+												"How similar it'll be to your prompt, higher is closer"
 											}
 											slider
 										/>

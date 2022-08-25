@@ -99,6 +99,7 @@ def generate():
 			prompt = request.json["prompt"]
 			seed = int(request.json["seed"])
 			inference_steps = int(request.json["inferenceSteps"])
+			guidance_scale = int(request.json["guidanceScale"])
 			width = int(request.json["width"])
 			height = int(request.json["height"])
 
@@ -170,7 +171,7 @@ def generate():
 						    num_inference_steps=inference_steps,
 						    width=width,
 						    height=height,
-						    # guidance_scale=7.5, # 0 to 20
+						    guidance_scale=guidance_scale,  # 0 to 20, 7.5 default
 						    yield_on_step=yield_on_step
 						)
 
@@ -190,6 +191,7 @@ def generate():
 			    "prompt": prompt,
 			    "seed": seed,
 			    "inferenceSteps": inference_steps,
+			    "guidanceScale": guidance_scale,
 			    "width": width,
 			    "height": height,
 			    # other
@@ -236,6 +238,7 @@ def generate_oneoff():
 			prompt = request.json["prompt"]
 			seed = int(request.json["seed"])
 			inference_steps = int(request.json["inferenceSteps"])
+			# guidance_scale = int(request.json["guidanceScale"])
 			width = int(request.json["width"])
 			height = int(request.json["height"])
 
@@ -273,7 +276,7 @@ def generate_oneoff():
 						    num_inference_steps=inference_steps,
 						    width=width,
 						    height=height,
-						    # guidance_scale=7.5, # 0 to 20
+						    # guidance_scale=guidance_scale,  # 0 to 20, 7.5 default
 						)
 
 						images.append(result["sample"][0])
@@ -293,6 +296,7 @@ def generate_oneoff():
 			    "prompt": prompt,
 			    "seed": seed,
 			    "inferenceSteps": inference_steps,
+			    # "guidanceScale": guidance_scale,
 			    "width": width,
 			    "height": height,
 			    # other
