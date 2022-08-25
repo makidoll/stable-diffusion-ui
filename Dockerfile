@@ -17,9 +17,9 @@ WORKDIR /app/
 RUN apt-get update -y && apt-get install -y python3-pip && \
 pip install torch --extra-index-url https://download.pytorch.org/whl/cu116
 
-COPY requirements.txt /app/server/requirements.txt
+COPY server/requirements.txt /app/server/requirements.txt
 # wont redownload torch because we're not doing --upgrade
-RUN pip install -r requirements.txt
+RUN cd server && pip install -r requirements.txt
 
 COPY server /app/server/
 COPY --from=frontend /app/frontend/dist/ /app/frontend/dist/
