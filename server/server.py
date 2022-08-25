@@ -1,6 +1,6 @@
 import base64
 import datetime
-import hashlib
+import math
 import os
 import random
 from io import BytesIO
@@ -9,8 +9,7 @@ from time import sleep
 from urllib import request
 
 from flask import (
-    Flask, Response, jsonify, request, send_file, send_from_directory,
-    stream_with_context
+    Flask, Response, jsonify, request, send_from_directory, stream_with_context
 )
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
@@ -78,6 +77,52 @@ Path(data_path).mkdir(parents=True, exist_ok=True)
 
 db = TinyDB(os.path.join(data_path, "db.json"))
 
+# functions and preloading
+
+def make_preview(images, id: int, width: int, height: int, variations: int):
+	preview_height = 64
+	preview_width_of_one = math.floor(preview_height * float(width / height))
+	preview_image = Image.new(
+	    "RGB", (preview_width_of_one * variations, preview_height)
+	)
+	for i in range(0, len(images)):
+		image = images[i].resize(
+		    (preview_width_of_one, preview_height),
+		    resample=Image.Resampling.LANCZOS
+		)
+		preview_image.paste(image, (preview_width_of_one * i, 0))
+
+	preview_filename = "id" + str(id) + "_preview.jpg"
+	preview_save_path = os.path.join(data_path, preview_filename)
+	preview_image.save(preview_save_path, "JPEG", quality=70)
+
+# generate previews that weren't made before i removed the api call
+
+preview_id = 0
+for result in db.table("generated").all():
+	preview_id += 1
+	id = preview_id
+
+	preview_filename = "id" + str(id) + "_preview.jpg"
+	preview_save_path = os.path.join(data_path, preview_filename)
+
+	if not os.path.exists(preview_save_path):
+		width = result.get("width", 512)
+		height = result.get("height", 512)
+		variations = result.get("variations", 3)
+
+		images = []
+		for i in range(0, variations):
+			images.append(
+			    Image.open(
+			        os.path.join(
+			            data_path, "id" + str(id) + "_v" + str(i) + ".png"
+			        )
+			    ),
+			)
+
+		make_preview(images, id, width, height, variations)
+
 # web server api
 
 generating = False
@@ -124,6 +169,8 @@ def generate():
 			    }
 			).data
 
+			images = []
+
 			if make_test_images:
 				if seed == -1:
 					seed = random.randint(0, 9007199254740991)
@@ -135,6 +182,7 @@ def generate():
 					filename = "id" + str(id) + "_v" + str(i) + ".png"
 					save_path = os.path.join(data_path, filename)
 					image.save(save_path)
+					images.append(image)
 
 					yield jsonify(
 					    {
@@ -179,6 +227,7 @@ def generate():
 						filename = "id" + str(id) + "_v" + str(i) + ".png"
 						save_path = os.path.join(data_path, filename)
 						image.save(save_path)
+						images.append(image)
 
 						yield jsonify(
 						    {
@@ -198,6 +247,8 @@ def generate():
 			    "variations": variations,
 			    "created": datetime.datetime.utcnow().isoformat() + "Z"
 			}
+
+			make_preview(images, id, width, height, variations)
 
 			# should be the same as id but this is more correct
 			id = db.table("generated").insert(data)
@@ -329,37 +380,6 @@ def results():
 @app.route("/api/image/<path:path>")
 def image(path):
 	return send_from_directory(data_path, path)
-
-@app.route("/api/preview/<path:id>")
-def preview(id):
-	size = 64
-
-	images = [
-	    Image.open(os.path.join(data_path, "id" + id + "_v0.png")),
-	    Image.open(os.path.join(data_path, "id" + id + "_v1.png")),
-	    Image.open(os.path.join(data_path, "id" + id + "_v2.png")),
-	    # Image.open(os.path.join(data_path, "id" + id + "_v3.png")),
-	    # Image.open(os.path.join(data_path, "id" + id + "_v4.png")),
-	    # Image.open(os.path.join(data_path, "id" + id + "_v5.png")),
-	]
-
-	etag_hash = ""
-	for image in images:
-		etag_hash += hashlib.md5(image.tobytes()).hexdigest()
-	etag_hash = hashlib.md5(bytes(etag_hash, "utf-8")).hexdigest()
-
-	final_image = Image.new("RGB", (size * len(images), size))
-	for i in range(0, len(images)):
-		image = images[i].resize(
-		    (size, size), resample=Image.Resampling.LANCZOS
-		)
-		final_image.paste(image, (size * i, 0))
-
-	final_image_io = BytesIO()
-	final_image.save(final_image_io, "JPEG", quality=70)
-	final_image_io.seek(0)
-
-	return send_file(final_image_io, mimetype="image/png", etag=etag_hash)
 
 # web server frontend
 
