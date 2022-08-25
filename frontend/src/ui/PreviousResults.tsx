@@ -24,6 +24,7 @@ export default function PreviousResults(props: {
 				// w={2.5 * Consts.variations * aspectRatio + "rem"}
 				h={2.5 + "rem"}
 				borderRadius={4}
+				loading={"lazy"}
 			/>
 			{/* <SimpleGrid columns={6} spacing={0.5}>
 				{images.map((src, i) => (
