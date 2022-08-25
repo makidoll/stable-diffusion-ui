@@ -73,54 +73,48 @@ export default function PromptInput(props: {
 												/>
 											)}
 										</Field>
-										<Tooltip label="50 works best, but 150 for highest detail">
-											<Field name="inferenceSteps">
-												{({ field, form }) => (
-													<SlimNumberInput
-														name={"Inf. Steps"}
-														min={1}
-														max={150}
-														step={1}
-														default={
-															Consts
-																.promptDefaults
-																.inferenceSteps
-														}
-														icon={BsBarChartSteps}
-														field={field}
-														form={form}
-														disabled={isSubmitting}
-														width={90}
-														slider
-													/>
-												)}
-											</Field>
-										</Tooltip>
-										<Tooltip label="How similar it'll be to your prompt, higher is closer">
-											<Field name="guidanceScale">
-												{({ field, form }) => (
-													<SlimNumberInput
-														name={"Cfg Scale"}
-														min={0}
-														max={20}
-														step={0.5}
-														default={
-															Consts
-																.promptDefaults
-																.guidanceScale
-														}
-														icon={
-															FaBalanceScaleLeft
-														}
-														field={field}
-														form={form}
-														disabled={isSubmitting}
-														width={90}
-														slider
-													/>
-												)}
-											</Field>
-										</Tooltip>
+										<Field name="inferenceSteps">
+											{({ field, form }) => (
+												<SlimNumberInput
+													name={"Inf. Steps"}
+													min={1}
+													max={150}
+													step={1}
+													default={
+														Consts.promptDefaults
+															.inferenceSteps
+													}
+													icon={BsBarChartSteps}
+													field={field}
+													form={form}
+													disabled={isSubmitting}
+													width={90}
+													tooltip="50 works best, but 150 for highest detail"
+													slider
+												/>
+											)}
+										</Field>
+										<Field name="guidanceScale">
+											{({ field, form }) => (
+												<SlimNumberInput
+													name={"Cfg Scale"}
+													min={0}
+													max={20}
+													step={0.5}
+													default={
+														Consts.promptDefaults
+															.guidanceScale
+													}
+													icon={FaBalanceScaleLeft}
+													field={field}
+													form={form}
+													disabled={isSubmitting}
+													width={90}
+													tooltip="How similar it'll be to your prompt, higher is closer"
+													slider
+												/>
+											)}
+										</Field>
 									</HStack>
 									<HStack>
 										<Field name="width">

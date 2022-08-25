@@ -18,7 +18,6 @@ import {
 	Tooltip,
 } from "@chakra-ui/react";
 import { IconType } from "react-icons";
-import { BiReset } from "react-icons/bi";
 
 export default function SlimNumberInput(props: {
 	name: string;
@@ -37,6 +36,7 @@ export default function SlimNumberInput(props: {
 }) {
 	const size = "sm";
 	const showReset = props.field.value != props.default;
+
 	const slimNumberInput = (
 		<Flex flexDirection={"row"}>
 			{props.slider ? (
@@ -133,5 +133,22 @@ export default function SlimNumberInput(props: {
 		</Flex>
 	);
 
-	return slimNumberInput;
+	const slimNumberInputWithResetOutline = (
+		<Box
+			boxShadow={
+				showReset ? "0 0 0 1px var(--chakra-colors-red-200)" : null
+			}
+			borderRadius={4}
+		>
+			{slimNumberInput}
+		</Box>
+	);
+
+	return props.tooltip ? (
+		<Tooltip label={props.tooltip}>
+			{slimNumberInputWithResetOutline}
+		</Tooltip>
+	) : (
+		slimNumberInputWithResetOutline
+	);
 }
