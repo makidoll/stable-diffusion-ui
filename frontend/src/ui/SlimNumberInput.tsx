@@ -41,7 +41,7 @@ export default function SlimNumberInput(props: {
 		<Flex flexDirection={"row"}>
 			{props.slider ? (
 				<>
-					<InputGroup size={size}>
+					<InputGroup size={size} mr={showReset ? -1.5 : 0}>
 						<InputLeftAddon borderLeftRadius={4}>
 							<Icon mr={2} as={props.icon} />
 							{props.name}
@@ -122,7 +122,6 @@ export default function SlimNumberInput(props: {
 						);
 					}}
 					disabled={props.disabled}
-					ml={props.slider ? -2 : 0}
 					borderLeftRadius={0}
 					borderRightRadius={4}
 					fontSize={12}
