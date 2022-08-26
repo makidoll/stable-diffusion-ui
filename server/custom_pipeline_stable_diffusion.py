@@ -189,23 +189,24 @@ class StableDiffusionPipeline(DiffusionPipeline):
 		image = image.cpu().permute(0, 2, 3, 1).numpy()
 
 		# MAKI CHANGES
-		# - add has_nsfw_concept variable
-		# - add if check_for_safety:
-		# - don't overwrite image (we can blur it heavily instead)
+		# - add: sample = image.copy()
+		# - add: has_nsfw_concept = [False]
+		# - add: if check_for_safety:
+		# - update: sample = self.numpy_to_pil(sample)
+		# - return: sample instead of image
 
-		has_nsfw_concept = False
+		sample = image.copy()
+		has_nsfw_concept = [False]
+
 		if check_for_safety:
 			safety_cheker_input = self.feature_extractor(
 			    self.numpy_to_pil(image), return_tensors="pt"
 			).to(self.device)
-			# image, has_nsfw_concept = self.safety_checker(
-			#     images=image, clip_input=safety_cheker_input.pixel_values
-			# )
-			has_nsfw_concept = self.safety_checker(
+			image, has_nsfw_concept = self.safety_checker(
 			    images=image, clip_input=safety_cheker_input.pixel_values
 			)
 
 		if output_type == "pil":
-			image = self.numpy_to_pil(image)
+			sample = self.numpy_to_pil(sample)
 
-		return {"sample": image, "nsfw_content_detected": has_nsfw_concept}
+		return {"sample": sample, "nsfw_content_detected": has_nsfw_concept}

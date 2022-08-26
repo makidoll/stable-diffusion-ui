@@ -293,8 +293,6 @@ def generate_oneoff():
 			unsafe = []
 
 			if make_test_images:
-				if seed == -1:
-					seed = random.randint(0, 9007199254740991)
 
 				for i in range(0, variations):
 					sleep(1)
@@ -303,10 +301,7 @@ def generate_oneoff():
 
 			else:
 				generator = torch.Generator("cuda")
-				if seed == -1:
-					seed = generator.seed()
-				else:
-					generator = generator.manual_seed(seed)
+				generator.seed()
 
 				for i in range(0, variations):
 					with autocast("cuda"):
@@ -320,7 +315,7 @@ def generate_oneoff():
 						)
 
 						images.append(result["sample"][0])
-						unsafe.append(result["nsfw_content_detected"])
+						unsafe.append(result["nsfw_content_detected"][0])
 
 			images_as_base64 = []
 
