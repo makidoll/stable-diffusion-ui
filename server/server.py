@@ -220,7 +220,8 @@ def generate():
 						    width=width,
 						    height=height,
 						    guidance_scale=guidance_scale,  # 0 to 20, 7.5 default
-						    yield_on_step=yield_on_step
+						    yield_on_step=yield_on_step,
+						    check_for_safety=False
 						)
 
 						image = result["sample"][0]
@@ -287,21 +288,9 @@ def generate_oneoff():
 
 		try:
 			prompt = request.json["prompt"]
-			seed = int(request.json["seed"])
-			inference_steps = int(request.json["inferenceSteps"])
-			# guidance_scale = float(request.json["guidanceScale"])
-			width = int(request.json["width"])
-			height = int(request.json["height"])
-
-			if inference_steps > 150:
-				generating = False
-				yield jsonify(
-				    {
-				        "error": "Please don't do more than 150 inference steps"
-				    }
-				).data
 
 			images = []
+			unsafe = []
 
 			if make_test_images:
 				if seed == -1:
@@ -324,13 +313,14 @@ def generate_oneoff():
 						result = yield from pipe(
 						    prompt,
 						    generator=generator,
-						    num_inference_steps=inference_steps,
-						    width=width,
-						    height=height,
-						    # guidance_scale=guidance_scale,  # 0 to 20, 7.5 default
+						    num_inference_steps=50,
+						    width=512,
+						    height=512,
+						    check_for_safety=True
 						)
 
 						images.append(result["sample"][0])
+						unsafe.append(result["nsfw_content_detected"])
 
 			images_as_base64 = []
 
@@ -343,17 +333,7 @@ def generate_oneoff():
 				    base64.b64encode(image_io.read()).decode("ascii")
 				)
 
-			data = {
-			    "prompt": prompt,
-			    "seed": seed,
-			    "inferenceSteps": inference_steps,
-			    # "guidanceScale": guidance_scale,
-			    "width": width,
-			    "height": height,
-			    # other
-			    "variations": variations,
-			    "images": images_as_base64
-			}
+			data = {"images": images_as_base64, "unsafe": unsafe}
 
 			generating = False
 
