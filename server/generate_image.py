@@ -36,11 +36,19 @@ model = load_model_from_config(
     config, os.path.join(server_path, "../sd-v1-4-full-ema.ckpt")
 )
 
+use_float16 = os.environ.get("USE_FLOAT16") == "1"
+
+model = model
+if use_float16:
+	print("Using float16 instead of float32")
+	model = model.half()
+
+device = "cuda"
+model = model.to(device)
+
 # should be fixed or it would break the model
 opt_C = 4
 opt_f = 8
-
-device = "cuda"
 
 def generate_seed():
 	return random.randint(0, 2**32 - 1)
