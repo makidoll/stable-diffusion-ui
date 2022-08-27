@@ -129,7 +129,7 @@ export default function ImageResult(props: {
 											setDownloading(true);
 											downloadFile(
 												props.src,
-												props.prompt,
+												props.prompt + ".png",
 											).finally(() => {
 												setDownloading(false);
 											});
