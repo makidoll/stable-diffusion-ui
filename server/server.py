@@ -181,15 +181,20 @@ def generate():
 						    }
 						).data
 
-					image, warning = yield from generate_image.generate_image(
+					result = yield from generate_image.generate_image(
 					    prompt=prompt,
 					    seed=seed + i,
 					    width=width,
 					    height=height,
 					    ddim_steps=inference_steps,
 					    cfg_scale=guidance_scale,
-					    yield_on_step=yield_on_step
+					    yield_on_step=yield_on_step,
+					    check_safety=False
 					)
+
+					image = result["image"]
+					warning = result["prompt_length_warning"]
+					# has_nsfw_concept = result["has_nsfw_concept"]
 
 					filename = "id" + str(id) + "_v" + str(i) + ".png"
 					save_path = os.path.join(data_path, filename)

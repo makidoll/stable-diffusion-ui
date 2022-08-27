@@ -4,12 +4,15 @@ import random
 import k_diffusion as K
 import numpy as np
 import torch
+from diffusers.pipelines.stable_diffusion.safety_checker import \
+    StableDiffusionSafetyChecker
 from einops import rearrange
 from ldm.util import instantiate_from_config
 from omegaconf import OmegaConf
 from PIL import Image
 from torch import autocast
 from tqdm.auto import trange
+from transformers import AutoFeatureExtractor
 
 def load_model_from_config(config, ckpt, verbose=False):
 	print(f"Loading model from {ckpt}")
@@ -30,6 +33,8 @@ def load_model_from_config(config, ckpt, verbose=False):
 	model.eval()
 	return model
 
+# load model
+
 server_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
 config = OmegaConf.load(os.path.join(server_path, "v1-inference.yaml"))
@@ -46,6 +51,12 @@ if use_float16:
 
 device = "cuda"
 model = model.to(device)
+
+# load safety model
+
+safety_model_id = "CompVis/stable-diffusion-safety-checker"
+safety_feature_extractor = AutoFeatureExtractor.from_pretrained(safety_model_id)
+safety_checker = StableDiffusionSafetyChecker.from_pretrained(safety_model_id)
 
 # should be fixed or it would break the model
 opt_C = 4
@@ -206,6 +217,26 @@ class KDiffusionSampler:
 
 		return samples_ddim, None
 
+def numpy_to_pil(images):
+	"""
+    Convert a numpy image or a batch of images to a PIL image.
+    """
+	if images.ndim == 3:
+		images = images[None, ...]
+	images = (images * 255).round().astype("uint8")
+	pil_images = [Image.fromarray(image) for image in images]
+
+	return pil_images
+
+def check_safety_fn(x_image):
+	safety_checker_input = safety_feature_extractor(
+	    numpy_to_pil(x_image), return_tensors="pt"
+	)
+	_, has_nsfw_concept = safety_checker(
+	    images=x_image, clip_input=safety_checker_input.pixel_values
+	)
+	return has_nsfw_concept
+
 # starts here
 
 def generate_image(
@@ -215,7 +246,8 @@ def generate_image(
     height: int = 512,
     ddim_steps: int = 50,
     cfg_scale: int = 7.5,
-    yield_on_step=None
+    yield_on_step=None,
+    check_safety=False
 ):
 	torch_gc()
 
@@ -254,7 +286,11 @@ def generate_image(
 		    (x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0
 		)
 
-		# TODO: add safety checker here
+		has_nsfw_concept = False
+		if check_safety:
+			has_nsfw_concept = check_safety_fn(
+			    x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
+			)
 
 		for i, x_sample in enumerate(x_samples_ddim):
 			x_sample = 255. * rearrange(
@@ -262,4 +298,8 @@ def generate_image(
 			)
 			x_sample = x_sample.astype(np.uint8)
 
-		return Image.fromarray(x_sample), prompt_length_warning
+		return {
+		    "image": Image.fromarray(x_sample),
+		    "prompt_length_warning": prompt_length_warning,
+		    "has_nsfw_concept": has_nsfw_concept[0]
+		}
