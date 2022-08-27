@@ -4,9 +4,11 @@
 # transformers==4.21.1 
 # scipy==1.9.0
 # ftfy==6.1.1
-# -e git+https://github.com/hlky/k-diffusion-sd#egg=k_diffusion
-# https://huggingface.co/CompVis/stable-diffusion-v-1-4-original
-# -e git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
+
+# pip install -e git+https://github.com/CompVis/stable-diffusion.git@main#egg=latent-diffusion
+# pip install -e git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
+# pip install -e git+https://github.com/hlky/k-diffusion-sd#egg=k_diffusion
+
 # web server
 tinydb==4.7.0
 Flask==2.2.2

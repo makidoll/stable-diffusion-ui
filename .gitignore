@@ -32,3 +32,5 @@ run.bat
 __pycache__
 update.sh
 *.ckpt
+# pip -e produces
+src/

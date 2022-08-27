@@ -37,6 +37,8 @@ export default function SlimNumberInput(props: {
 	const size = "sm";
 	const showReset = props.field.value != props.default;
 
+	// TODO: lower opacity of text when disabled
+
 	const slimNumberInput = (
 		<Flex flexDirection={"row"}>
 			{props.slider ? (

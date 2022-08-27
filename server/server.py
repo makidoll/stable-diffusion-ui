@@ -170,26 +170,25 @@ def generate():
 
 				for i in range(0, variations):
 
-					# TODO: fix progress bar on step
-					# def yield_on_step(step):
-					# 	return jsonify(
-					# 	    {
-					# 	        "percentage":
-					# 	            (
-					# 	                (i / variations) +
-					# 	                (step / inference_steps / variations)
-					# 	            ) * 100
-					# 	    }
-					# 	).data
+					def yield_on_step(step):
+						return jsonify(
+						    {
+						        "percentage":
+						            (
+						                (i / variations) +
+						                (step / inference_steps / variations)
+						            ) * 100
+						    }
+						).data
 
-					image, warning = generate_image.generate_image(
+					image, warning = yield from generate_image.generate_image(
 					    prompt=prompt,
 					    seed=seed + i,
 					    width=width,
 					    height=height,
 					    ddim_steps=inference_steps,
 					    cfg_scale=guidance_scale,
-					    # yield_on_step=yield_on_step
+					    yield_on_step=yield_on_step
 					)
 
 					filename = "id" + str(id) + "_v" + str(i) + ".png"

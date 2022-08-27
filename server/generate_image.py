@@ -9,6 +9,7 @@ from ldm.util import instantiate_from_config
 from omegaconf import OmegaConf
 from PIL import Image
 from torch import autocast
+from tqdm.auto import trange
 
 def load_model_from_config(config, ckpt, verbose=False):
 	print(f"Loading model from {ckpt}")
@@ -125,15 +126,72 @@ class KDiffusionSampler:
 		self.model_wrap = K.external.CompVisDenoiser(m)
 		self.schedule = sampler
 
+	# i copied this function so we can yield to flask
+	# its not a good solution especially because i could just callback
+	# but i have no idea how to stream data without yielding in flask
+
+	@torch.no_grad()
+	def sample_lms(
+	    self,
+	    model,
+	    x,
+	    sigmas,
+	    extra_args=None,
+	    callback=None,
+	    disable=None,
+	    order=4,
+	    yield_on_step=None
+	):
+		extra_args = {} if extra_args is None else extra_args
+		s_in = x.new_ones([x.shape[0]])
+		ds = []
+		for i in trange(len(sigmas) - 1, disable=disable):
+			if yield_on_step != None:
+				yield yield_on_step(i)
+
+			denoised = model(x, sigmas[i] * s_in, **extra_args)
+			d = K.sampling.to_d(x, sigmas[i], denoised)
+			ds.append(d)
+			if len(ds) > order:
+				ds.pop(0)
+			if callback is not None:
+				callback(
+				    {
+				        'x': x,
+				        'i': i,
+				        'sigma': sigmas[i],
+				        'sigma_hat': sigmas[i],
+				        'denoised': denoised
+				    }
+				)
+			cur_order = min(i + 1, order)
+			coeffs = [
+			    K.sampling.linear_multistep_coeff(
+			        cur_order, sigmas.cpu(), i, j
+			    ) for j in range(cur_order)
+			]
+			x = x + sum(coeff * d for coeff, d in zip(coeffs, reversed(ds)))
+		return x
+
 	def sample(
-	    self, S, conditioning, batch_size, shape, verbose,
-	    unconditional_guidance_scale, unconditional_conditioning, eta, x_T
+	    self,
+	    S,
+	    conditioning,
+	    batch_size,
+	    shape,
+	    verbose,
+	    unconditional_guidance_scale,
+	    unconditional_conditioning,
+	    eta,
+	    x_T,
+	    yield_on_step=None
 	):
 		sigmas = self.model_wrap.get_sigmas(S)
 		x = x_T * sigmas[0]
 		model_wrap_cfg = CFGDenoiser(self.model_wrap)
 
-		samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](
+		# samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](
+		samples_ddim = yield from self.sample_lms(
 		    model_wrap_cfg,
 		    x,
 		    sigmas,
@@ -142,7 +200,8 @@ class KDiffusionSampler:
 		        'uncond': unconditional_conditioning,
 		        'cond_scale': unconditional_guidance_scale
 		    },
-		    disable=False
+		    disable=False,
+		    yield_on_step=yield_on_step
 		)
 
 		return samples_ddim, None
@@ -156,54 +215,46 @@ def generate_image(
     height: int = 512,
     ddim_steps: int = 50,
     cfg_scale: int = 7.5,
-    # yield_on_step=None
+    yield_on_step=None
 ):
-	sampler = KDiffusionSampler(model, "lms")
-
-	def sample(x, conditioning, unconditional_conditioning):
-		samples_ddim, _ = sampler.sample(
-		    S=ddim_steps,
-		    conditioning=conditioning,
-		    batch_size=int(x.shape[0]),
-		    shape=x[0].shape,
-		    verbose=False,
-		    unconditional_guidance_scale=cfg_scale,
-		    unconditional_conditioning=unconditional_conditioning,
-		    eta=0.0,
-		    x_T=x
-		)
-		return samples_ddim
-
 	torch_gc()
 
 	prompt_length_warning = check_prompt_length(prompt)
+
+	sampler = KDiffusionSampler(model, "lms")
 
 	with torch.no_grad(), autocast("cuda"), model.ema_scope():
 		# batch size
 		prompts = [prompt]
 		seeds = [seed]
 
+		uc = model.get_learned_conditioning(len(prompts) * [""])
+
+		c = model.get_learned_conditioning(prompts)
+
 		# we manually generate all input noises because each one should have a specific seed
-		x = create_random_tensors(
-		    [opt_C, height // opt_f, width // opt_f], seeds=seeds
-		)
+		shape = [opt_C, height // opt_f, width // opt_f]
+		x = create_random_tensors(shape, seeds=seeds)
 
-		conditioning = model.get_learned_conditioning(prompts)
-
-		unconditional_conditioning = model.get_learned_conditioning(
-		    len(prompts) * [""]
-		)
-
-		samples_ddim = sample(
-		    x=x,
-		    conditioning=conditioning,
-		    unconditional_conditioning=unconditional_conditioning,
+		samples_ddim, _ = yield from sampler.sample(
+		    S=ddim_steps,
+		    conditioning=c,
+		    batch_size=int(x.shape[0]),
+		    shape=x[0].shape,
+		    verbose=False,
+		    unconditional_guidance_scale=cfg_scale,
+		    unconditional_conditioning=uc,
+		    eta=0.0,
+		    x_T=x,
+		    yield_on_step=yield_on_step
 		)
 
 		x_samples_ddim = model.decode_first_stage(samples_ddim)
 		x_samples_ddim = torch.clamp(
 		    (x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0
 		)
+
+		# TODO: add safety checker here
 
 		for i, x_sample in enumerate(x_samples_ddim):
 			x_sample = 255. * rearrange(
