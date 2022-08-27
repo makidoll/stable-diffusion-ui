@@ -245,77 +245,76 @@ def generate():
 
 	return Response(generate_stream())
 
-# TODO: fix oneoff api after adding safety back in
-# @app.route("/api/generate/oneoff", methods=["POST"])
-# def generate_oneoff():
-# 	global generating
-# 	if generating:
-# 		return jsonify({"error": "Busy generating another"}), 400
+@app.route("/api/generate/oneoff", methods=["POST"])
+def generate_oneoff():
+	global generating
+	if generating:
+		return jsonify({"error": "Busy generating another"}), 400
 
-# 	@stream_with_context
-# 	def generate_oneoff_stream():
-# 		global generating
-# 		generating = True
+	@stream_with_context
+	def generate_oneoff_stream():
+		global generating
+		generating = True
 
-# 		variations = 3
+		variations = 3
 
-# 		try:
-# 			prompt = request.json["prompt"]
+		try:
+			prompt = request.json["prompt"]
 
-# 			images = []
-# 			unsafe = []
+			images = []
+			unsafe = []
 
-# 			if make_test_images:
+			if make_test_images:
 
-# 				for i in range(0, variations):
-# 					sleep(1)
+				for i in range(0, variations):
+					sleep(1)
 
-# 					images.append(fakeImage(i, prompt))
+					images.append(fakeImage(i, prompt))
 
-# 			else:
-# 				generator = torch.Generator("cuda")
-# 				generator.seed()
+			else:
+				seed = generate_image.generate_seed()
 
-# 				for i in range(0, variations):
-# 					with autocast("cuda"):
-# 						result = yield from pipe(
-# 						    prompt,
-# 						    generator=generator,
-# 						    num_inference_steps=50,
-# 						    width=512,
-# 						    height=512,
-# 						    check_for_safety=True
-# 						)
+				for i in range(0, variations):
 
-# 						images.append(result["sample"][0])
-# 						unsafe.append(result["nsfw_content_detected"][0])
+					result = yield from generate_image.generate_image(
+					    prompt=prompt,
+					    seed=seed + i,
+					    width=512,
+					    height=512,
+					    ddim_steps=50,
+					    cfg_scale=7.5,
+					    check_safety=True
+					)
 
-# 			images_as_base64 = []
+					images.append(result["image"])
+					unsafe.append(result["has_nsfw_concept"])
 
-# 			for image in images:
-# 				image_io = BytesIO()
-# 				image.save(image_io, "PNG")
-# 				image_io.seek(0)
-# 				images_as_base64.append(
-# 				    "data:image/png;base64," +
-# 				    base64.b64encode(image_io.read()).decode("ascii")
-# 				)
+			images_as_base64 = []
 
-# 			data = {"images": images_as_base64, "unsafe": unsafe}
+			for image in images:
+				image_io = BytesIO()
+				image.save(image_io, "PNG")
+				image_io.seek(0)
+				images_as_base64.append(
+				    "data:image/png;base64," +
+				    base64.b64encode(image_io.read()).decode("ascii")
+				)
 
-# 			generating = False
+			data = {"images": images_as_base64, "unsafe": unsafe}
 
-# 			yield jsonify(data).data
-# 		except Exception as e:
-# 			generating = False
-# 			print(repr(e))
-# 			yield jsonify(
-# 			    {
-# 			        "error": "Something went wrong, try again soon"
-# 			    }
-# 			).data
+			generating = False
 
-# 	return Response(generate_oneoff_stream())
+			yield jsonify(data).data
+		except Exception as e:
+			generating = False
+			print(repr(e))
+			yield jsonify(
+			    {
+			        "error": "Something went wrong, try again soon"
+			    }
+			).data
+
+	return Response(generate_oneoff_stream())
 
 @app.route("/api/results", methods=["GET"])
 def results():
