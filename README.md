@@ -2,7 +2,7 @@
 
 Really simple and intuitive interace for [Stable Diffusion](https://github.com/CompVis/stable-diffusion)
 
-![example](https://raw.githubusercontent.com/makifoxgirl/stable-diffusion-ui/main/example.gif)
+![example](https://raw.githubusercontent.com/makifoxgirl/stable-diffusion-ui/main/example.gif?1)
 
 ## Features
 
