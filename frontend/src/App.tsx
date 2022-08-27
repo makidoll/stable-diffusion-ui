@@ -8,6 +8,7 @@ import {
 	Image,
 	Text,
 	useToast,
+	VStack,
 } from "@chakra-ui/react";
 import { FormikProps } from "formik";
 import { useEffect, useRef, useState } from "react";
@@ -178,20 +179,34 @@ export default function App() {
 					justifyContent={result || loading ? "flex-start" : "center"}
 				>
 					{result || loading ? null : (
-						<>
+						<HStack mb={8}>
 							<Image
 								src={
-									new URL("../icon.svg", import.meta.url)
+									new URL("../favicon.png", import.meta.url)
 										.pathname
 								}
 								h={24}
-								mb={4}
+								mr={2}
 							></Image>
-							<Heading>Cutelab and Blåhaj</Heading>
-							<Heading size="lg" mb={6}>
-								make Stable Diffusion
-							</Heading>
-						</>
+							<VStack>
+								<Heading
+									mb={-4}
+									size={"4xl"}
+									fontWeight={300}
+									letterSpacing={-5}
+								>
+									stable diffusion
+								</Heading>
+								<Heading
+									size="lg"
+									fontWeight={400}
+									letterSpacing={-2}
+									opacity={0.6}
+								>
+									we are the dreamers of the dreams
+								</Heading>
+							</VStack>
+						</HStack>
 					)}
 					<PromptInput
 						promptFormRef={promptFormRef}
