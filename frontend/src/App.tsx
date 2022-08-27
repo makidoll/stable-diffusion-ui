@@ -83,14 +83,8 @@ export default function App() {
 
 		const reader = response.body.getReader();
 
-		// TODO: figure out how to avoid locking the ui because of this while loop
-
-		while (true) {
+		function handleString(string: string) {
 			try {
-				const { value, done } = await reader.read();
-
-				const string = new TextDecoder().decode(value);
-
 				const data: Progress & Result & { error: string } =
 					JSON.parse(string);
 
@@ -119,12 +113,30 @@ export default function App() {
 				} else {
 					setProgress(progress => ({ ...progress, ...data }));
 				}
-
-				if (done) break;
 			} catch (error) {
 				console.error(error);
 			}
 		}
+
+		async function processReader({
+			done,
+			value,
+		}: ReadableStreamDefaultReadResult<Uint8Array>) {
+			if (done) return;
+
+			try {
+				const stringValue = new TextDecoder().decode(value).trim();
+				for (const string of stringValue.split("\n")) {
+					handleString(string);
+				}
+			} catch (error) {
+				console.error(error);
+			}
+
+			await processReader(await reader.read());
+		}
+
+		await processReader(await reader.read());
 
 		setLoading(false);
 		setProgress(null);

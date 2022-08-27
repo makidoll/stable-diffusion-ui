@@ -339,4 +339,4 @@ def catch_all(path):
 
 if __name__ == "__main__":
 	print("Server running at http://127.0.0.1:5000")
-	serve(app, port=5000, host="0.0.0.0", threads=32)
+	serve(app, port=5000, host="0.0.0.0", threads=16)
