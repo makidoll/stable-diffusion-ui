@@ -131,6 +131,17 @@ class CFGDenoiser(torch.nn.Module):
 		uncond, cond = self.inner_model(x_in, sigma_in, cond=cond_in).chunk(2)
 		return uncond + (cond - uncond) * cond_scale
 
+def x_to_image(x, batch_index=0):
+	x_samples_ddim = model.decode_first_stage(x)
+	x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+
+	x_sample = 255. * rearrange(
+	    x_samples_ddim[batch_index].cpu().numpy(), 'c h w -> h w c'
+	)
+	x_sample = x_sample.astype(np.uint8)
+
+	return Image.fromarray(x_sample)
+
 class KDiffusionSampler:
 	def __init__(self, m, sampler):
 		self.model = m
@@ -140,6 +151,7 @@ class KDiffusionSampler:
 	# i copied this function so we can yield to flask
 	# its not a good solution especially because i could just callback
 	# but i have no idea how to stream data without yielding in flask
+	# https://github.com/hlky/k-diffusion-sd/blob/master/k_diffusion/sampling.py
 
 	@torch.no_grad()
 	def sample_lms(
