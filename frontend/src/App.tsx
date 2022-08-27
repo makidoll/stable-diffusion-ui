@@ -88,7 +88,6 @@ export default function App() {
 		while (true) {
 			try {
 				const { value, done } = await reader.read();
-				if (done) break;
 
 				const string = new TextDecoder().decode(value);
 
@@ -120,6 +119,8 @@ export default function App() {
 				} else {
 					setProgress(progress => ({ ...progress, ...data }));
 				}
+
+				if (done) break;
 			} catch (error) {
 				console.error(error);
 			}
