@@ -290,7 +290,7 @@ def generate_image(
 		if check_safety:
 			has_nsfw_concept = check_safety_fn(
 			    x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
-			)
+			)[0]
 
 		for i, x_sample in enumerate(x_samples_ddim):
 			x_sample = 255. * rearrange(
@@ -301,5 +301,5 @@ def generate_image(
 		return {
 		    "image": Image.fromarray(x_sample),
 		    "prompt_length_warning": prompt_length_warning,
-		    "has_nsfw_concept": has_nsfw_concept[0]
+		    "has_nsfw_concept": has_nsfw_concept
 		}
