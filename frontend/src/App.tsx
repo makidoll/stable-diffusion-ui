@@ -83,6 +83,8 @@ export default function App() {
 
 		const reader = response.body.getReader();
 
+		// TODO: figure out how to avoid locking the ui because of this while loop
+
 		while (true) {
 			try {
 				const { value, done } = await reader.read();
@@ -121,12 +123,6 @@ export default function App() {
 			} catch (error) {
 				console.error(error);
 			}
-			// to avoid locking up
-			await new Promise(resolve => {
-				setTimeout(() => {
-					resolve(null);
-				}, 10);
-			});
 		}
 
 		setLoading(false);
