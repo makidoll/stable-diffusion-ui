@@ -203,7 +203,7 @@ export default function App() {
 									letterSpacing={-2}
 									opacity={0.6}
 								>
-									we are the dreamers of the dreams
+									we are the dreamers of dreams
 								</Heading>
 							</VStack>
 						</HStack>
