@@ -1,3 +1,5 @@
+import { Sampler } from "./Prompt";
+
 export interface Result {
 	id: number;
 	prompt: string;
@@ -6,6 +8,7 @@ export interface Result {
 	guidanceScale: number;
 	width: number;
 	height: number;
+	sampler: Sampler;
 	// other
 	warning: string;
 	variations: number;

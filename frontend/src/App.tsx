@@ -53,6 +53,7 @@ export default function App() {
 		guidanceScale,
 		width,
 		height,
+		sampler,
 	}: Prompt) => {
 		setLoading(true);
 
@@ -73,6 +74,7 @@ export default function App() {
 			guidanceScale: Number(guidanceScale),
 			width: Number(width),
 			height: Number(height),
+			sampler: sampler,
 		};
 
 		const response = await fetch("/api/generate", {

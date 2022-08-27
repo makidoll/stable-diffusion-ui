@@ -138,6 +138,7 @@ def generate():
 			guidance_scale = float(request.json["guidanceScale"])
 			width = int(request.json["width"])
 			height = int(request.json["height"])
+			sampler = request.json["sampler"]
 
 			if inference_steps > 150:
 				generating = False
@@ -210,7 +211,8 @@ def generate():
 					    ddim_steps=inference_steps,
 					    cfg_scale=guidance_scale,
 					    yield_on_step=yield_on_step,
-					    check_safety=False
+					    check_safety=False,
+					    sampler=sampler
 					)
 
 					image = result["image"]
@@ -236,6 +238,7 @@ def generate():
 			    "guidanceScale": guidance_scale,
 			    "width": width,
 			    "height": height,
+			    "sampler": sampler,
 			    # other
 			    "variations": variations,
 			    "created": datetime.datetime.utcnow().isoformat() + "Z"
@@ -263,6 +266,7 @@ def generate():
 			        "error": "Something went wrong, try again soon"
 			    }
 			).data
+			raise e
 
 	return Response(generate_stream())
 
@@ -304,7 +308,8 @@ def generate_oneoff():
 					    height=512,
 					    ddim_steps=50,
 					    cfg_scale=7.5,
-					    check_safety=True
+					    check_safety=True,
+					    sampler="k_lms"
 					)
 
 					images.append(result["image"])

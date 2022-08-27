@@ -5,7 +5,6 @@ import {
 	Flex,
 	HStack,
 	Input,
-	Tooltip,
 	VStack,
 } from "@chakra-ui/react";
 import { formatRelative } from "date-fns";
@@ -14,11 +13,15 @@ import { MutableRefObject } from "react";
 import { BsBarChartSteps } from "react-icons/bs";
 import { FaBalanceScaleLeft, FaSeedling } from "react-icons/fa";
 import { MdCloud } from "react-icons/md";
-import { TbArrowsHorizontal, TbArrowsVertical } from "react-icons/tb";
+import {
+	TbArrowsHorizontal,
+	TbArrowsRandom,
+	TbArrowsVertical,
+} from "react-icons/tb";
 import { Consts } from "../consts";
-import { Prompt } from "../interfaces/Prompt";
+import { Prompt, Sampler } from "../interfaces/Prompt";
 import { Result } from "../interfaces/Result";
-import SlimNumberInput from "./SlimNumberInput";
+import SlimPromptInput from "./SlimPromptInput";
 
 export default function PromptInput(props: {
 	promptFormRef?: MutableRefObject<FormikProps<Prompt>>;
@@ -57,7 +60,7 @@ export default function PromptInput(props: {
 									<HStack mb={2}>
 										<Field name="seed">
 											{({ field, form }) => (
-												<SlimNumberInput
+												<SlimPromptInput
 													name={"Seed"}
 													min={-1}
 													max={Number.MAX_VALUE}
@@ -75,7 +78,7 @@ export default function PromptInput(props: {
 										</Field>
 										<Field name="inferenceSteps">
 											{({ field, form }) => (
-												<SlimNumberInput
+												<SlimPromptInput
 													name={"Inf. Steps"}
 													min={1}
 													max={150}
@@ -90,13 +93,13 @@ export default function PromptInput(props: {
 													disabled={isSubmitting}
 													width={90}
 													tooltip="50 works best, but 150 for highest detail"
-													slider
+													type="slider"
 												/>
 											)}
 										</Field>
 										<Field name="guidanceScale">
 											{({ field, form }) => (
-												<SlimNumberInput
+												<SlimPromptInput
 													name={"Cfg Scale"}
 													min={0}
 													max={20}
@@ -111,7 +114,7 @@ export default function PromptInput(props: {
 													disabled={isSubmitting}
 													width={90}
 													tooltip="How similar it'll be to your prompt, higher is closer"
-													slider
+													type="slider"
 												/>
 											)}
 										</Field>
@@ -119,7 +122,7 @@ export default function PromptInput(props: {
 									<HStack>
 										<Field name="width">
 											{({ field, form }) => (
-												<SlimNumberInput
+												<SlimPromptInput
 													name={"Width"}
 													min={256}
 													max={768}
@@ -133,14 +136,14 @@ export default function PromptInput(props: {
 													form={form}
 													disabled={isSubmitting}
 													width={90}
-													slider
+													type="slider"
 													prefix={"px"}
 												/>
 											)}
 										</Field>
 										<Field name="height">
 											{({ field, form }) => (
-												<SlimNumberInput
+												<SlimPromptInput
 													name={"Height"}
 													min={256}
 													max={768}
@@ -154,8 +157,28 @@ export default function PromptInput(props: {
 													form={form}
 													disabled={isSubmitting}
 													width={90}
-													slider
+													type="slider"
 													prefix={"px"}
+												/>
+											)}
+										</Field>
+										<Field name="sampler">
+											{({ field, form }) => (
+												<SlimPromptInput
+													name={"Sampler"}
+													default={
+														Consts.promptDefaults
+															.sampler
+													}
+													icon={TbArrowsRandom}
+													field={field}
+													form={form}
+													disabled={isSubmitting}
+													width={110}
+													type="dropdown"
+													values={Object.values(
+														Sampler,
+													)}
 												/>
 											)}
 										</Field>

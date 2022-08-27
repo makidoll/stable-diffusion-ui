@@ -143,10 +143,11 @@ def x_to_image(x, batch_index=0):
 	return Image.fromarray(x_sample)
 
 class KDiffusionSampler:
-	def __init__(self, m, sampler):
+	def __init__(self, m, sampler, yield_on_step=None):
 		self.model = m
 		self.model_wrap = K.external.CompVisDenoiser(m)
 		self.schedule = sampler
+		self.yield_on_step = yield_on_step
 
 	# i copied this function so we can yield to flask
 	# its not a good solution especially because i could just callback
@@ -163,14 +164,13 @@ class KDiffusionSampler:
 	    callback=None,
 	    disable=None,
 	    order=4,
-	    yield_on_step=None
 	):
 		extra_args = {} if extra_args is None else extra_args
 		s_in = x.new_ones([x.shape[0]])
 		ds = []
 		for i in trange(len(sigmas) - 1, disable=disable):
-			if yield_on_step != None:
-				yield yield_on_step(i) # optionally pass x
+			if self.yield_on_step != None:
+				yield self.yield_on_step(i)  # optionally pass x
 
 			denoised = model(x, sigmas[i] * s_in, **extra_args)
 			d = K.sampling.to_d(x, sigmas[i], denoised)
@@ -196,6 +196,88 @@ class KDiffusionSampler:
 			x = x + sum(coeff * d for coeff, d in zip(coeffs, reversed(ds)))
 		return x
 
+	@torch.no_grad()
+	def sample_euler(
+	    self,
+	    model,
+	    x,
+	    sigmas,
+	    extra_args=None,
+	    callback=None,
+	    disable=None,
+	    s_churn=0.,
+	    s_tmin=0.,
+	    s_tmax=float('inf'),
+	    s_noise=1.,
+	):
+		"""Implements Algorithm 2 (Euler steps) from Karras et al. (2022)."""
+		extra_args = {} if extra_args is None else extra_args
+		s_in = x.new_ones([x.shape[0]])
+		for i in trange(len(sigmas) - 1, disable=disable):
+			if self.yield_on_step != None:
+				yield self.yield_on_step(i)  # optionally pass x
+
+			gamma = min(s_churn / (len(sigmas) - 1), 2**0.5 -
+			            1) if s_tmin <= sigmas[i] <= s_tmax else 0.
+			eps = torch.randn_like(x) * s_noise
+			sigma_hat = sigmas[i] * (gamma + 1)
+			if gamma > 0:
+				x = x + eps * (sigma_hat**2 - sigmas[i]**2)**0.5
+			denoised = model(x, sigma_hat * s_in, **extra_args)
+			d = K.sampling.to_d(x, sigma_hat, denoised)
+			if callback is not None:
+				callback(
+				    {
+				        'x': x,
+				        'i': i,
+				        'sigma': sigmas[i],
+				        'sigma_hat': sigma_hat,
+				        'denoised': denoised
+				    }
+				)
+			dt = sigmas[i + 1] - sigma_hat
+			# Euler method
+			x = x + d * dt
+		return x
+
+	@torch.no_grad()
+	def sample_euler_a(
+	    self,
+	    model,
+	    x,
+	    sigmas,
+	    extra_args=None,
+	    callback=None,
+	    disable=None,
+	):
+		"""Ancestral sampling with Euler method steps."""
+		extra_args = {} if extra_args is None else extra_args
+		s_in = x.new_ones([x.shape[0]])
+		for i in trange(len(sigmas) - 1, disable=disable):
+			if self.yield_on_step != None:
+				yield self.yield_on_step(i)  # optionally pass x
+
+			denoised = model(x, sigmas[i] * s_in, **extra_args)
+			sigma_down, sigma_up = K.sampling.get_ancestral_step(
+			    sigmas[i], sigmas[i + 1]
+			)
+			if callback is not None:
+				callback(
+				    {
+				        'x': x,
+				        'i': i,
+				        'sigma': sigmas[i],
+				        'sigma_hat': sigmas[i],
+				        'denoised': denoised
+				    }
+				)
+			d = K.sampling.to_d(x, sigmas[i], denoised)
+			# Euler method
+			dt = sigma_down - sigmas[i]
+			x = x + d * dt
+			x = x + torch.randn_like(x) * sigma_up
+		return x
+
 	def sample(
 	    self,
 	    S,
@@ -207,14 +289,20 @@ class KDiffusionSampler:
 	    unconditional_conditioning,
 	    eta,
 	    x_T,
-	    yield_on_step=None
 	):
 		sigmas = self.model_wrap.get_sigmas(S)
 		x = x_T * sigmas[0]
 		model_wrap_cfg = CFGDenoiser(self.model_wrap)
 
-		# samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](
-		samples_ddim = yield from self.sample_lms(
+		sample_fn = None
+		if self.schedule == "lms":
+			sample_fn = self.sample_lms
+		elif self.schedule == "euler":
+			sample_fn = self.sample_euler
+		elif self.schedule == "euler_a":
+			sample_fn = self.sample_euler_a
+
+		samples_ddim = yield from sample_fn(
 		    model_wrap_cfg,
 		    x,
 		    sigmas,
@@ -224,7 +312,6 @@ class KDiffusionSampler:
 		        'cond_scale': unconditional_guidance_scale
 		    },
 		    disable=False,
-		    yield_on_step=yield_on_step
 		)
 
 		return samples_ddim, None
@@ -259,13 +346,15 @@ def generate_image(
     ddim_steps: int = 50,
     cfg_scale: int = 7.5,
     yield_on_step=None,
-    check_safety=False
+    check_safety=False,
+    sampler: str = "k_lms"
 ):
 	torch_gc()
 
 	prompt_length_warning = check_prompt_length(prompt)
 
-	sampler = KDiffusionSampler(model, "lms")
+	# lms, euler, euler_a
+	sampler = KDiffusionSampler(model, sampler[2:], yield_on_step)
 
 	with torch.no_grad(), autocast("cuda"), model.ema_scope():
 		# batch size
@@ -290,7 +379,6 @@ def generate_image(
 		    unconditional_conditioning=uc,
 		    eta=0.0,
 		    x_T=x,
-		    yield_on_step=yield_on_step
 		)
 
 		x_samples_ddim = model.decode_first_stage(samples_ddim)

@@ -1,4 +1,4 @@
-import { Prompt } from "./interfaces/Prompt";
+import { Prompt, Sampler } from "./interfaces/Prompt";
 
 const promptDefaults: Prompt = {
 	prompt: "",
@@ -7,6 +7,7 @@ const promptDefaults: Prompt = {
 	guidanceScale: 7.5,
 	width: 512,
 	height: 512,
+	sampler: Sampler.k_lms,
 };
 
 export const Consts = {
