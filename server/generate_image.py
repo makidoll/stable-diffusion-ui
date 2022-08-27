@@ -158,7 +158,7 @@ class KDiffusionSampler:
 		ds = []
 		for i in trange(len(sigmas) - 1, disable=disable):
 			if yield_on_step != None:
-				yield yield_on_step(i)
+				yield yield_on_step(i) # optionally pass x
 
 			denoised = model(x, sigmas[i] * s_in, **extra_args)
 			d = K.sampling.to_d(x, sigmas[i], denoised)

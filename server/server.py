@@ -9,7 +9,8 @@ from time import sleep
 from urllib import request
 
 from flask import (
-    Flask, Response, jsonify, request, send_from_directory, stream_with_context
+    Flask, Response, jsonify, request, send_file, send_from_directory,
+    stream_with_context
 )
 from PIL import Image, ImageDraw
 from tinydb import TinyDB
@@ -101,6 +102,22 @@ for result in db.table("generated").all():
 
 generating = False
 
+# step_previews = {}
+
+# @app.route("/api/preview/<id>/<variation>/<step>")
+# def preview(id, variation, step):
+# 	id = int(id)
+# 	variation = int(variation)
+# 	step = int(step)
+
+# 	image = generate_image.x_to_image(step_previews[id][variation][step])
+
+# 	image_io = BytesIO()
+# 	image.save(image_io, "png")
+# 	image_io.seek(0)
+
+# 	return send_file(image_io, mimetype="image/png")
+
 @app.route("/api/generate", methods=["POST"])
 def generate():
 	global generating
@@ -144,6 +161,7 @@ def generate():
 			).data
 
 			images = []
+			# step_previews[id] = {}
 
 			if make_test_images:
 				if seed == -1:
@@ -169,10 +187,13 @@ def generate():
 					seed = generate_image.generate_seed()
 
 				for i in range(0, variations):
+					# step_previews[id][i] = {}
 
 					def yield_on_step(step):
+						# step_previews[id][i][step] = x
 						return jsonify(
 						    {
+						        # "step": step,
 						        "percentage":
 						            (
 						                (i / variations) +

@@ -33,4 +33,4 @@ __pycache__
 update.sh
 *.ckpt
 # pip -e produces
-src/
+/src/

@@ -61,6 +61,7 @@ export default function App() {
 			completed: 0,
 			variations: 0,
 			prompt: "",
+			// step: -1,
 			percentage: 0,
 		});
 
