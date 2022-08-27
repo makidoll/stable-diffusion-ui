@@ -112,6 +112,12 @@ export default function App() {
 			} catch (error) {
 				console.error(error);
 			}
+			// to avoid locking up
+			await new Promise(resolve => {
+				setTimeout(() => {
+					resolve(null);
+				}, 10);
+			});
 		}
 
 		setLoading(false);
