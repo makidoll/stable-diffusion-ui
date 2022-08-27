@@ -5,6 +5,7 @@ git+https://github.com/hlky/k-diffusion-sd#egg=k_diffusion
 git+https://github.com/openai/CLIP#egg=clip
 pytorch-lightning==1.7.3
 transformers==4.21.2
+diffusers==0.2.4
 omegaconf==2.2.3
 
 # web server
