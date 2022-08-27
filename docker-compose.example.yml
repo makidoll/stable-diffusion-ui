@@ -13,14 +13,8 @@ services:
                           capabilities: [gpu]
         volumes:
             - ./data:/app/data
-            - ./cache:/root/.cache/huggingface/diffusers
+            # agree to stable diffusion license and download sd-v1-4-full-ema.ckpt
+            # https://huggingface.co/CompVis/stable-diffusion-v1-4-original
+            - ./sd-v1-4-full-ema.ckpt:/app/sd-v1-4-full-ema.ckpt
         ports:
             - 5000:5000
-        environment:
-            # agree to stable diffusion license first
-            # https://huggingface.co/CompVis/stable-diffusion-v1-4
-            # then get a token from here
-            # https://huggingface.co/settings/tokens
-            - HUGGINGFACE_AUTH_TOKEN=
-            # if you want to use float16 to reduce vram, uncomment
-            # - USE_FLOAT16=1

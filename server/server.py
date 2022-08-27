@@ -20,16 +20,6 @@ make_test_images = os.environ.get("DEV") == "1"
 if make_test_images:
 	print("IN DEV=1 MODE, WILL MAKE TEST IMAGES INSTEAD")
 
-use_float16 = os.environ.get("USE_FLOAT16") != None
-
-if not make_test_images:
-	import torch
-	from diffusers import LMSDiscreteScheduler
-	from torch import autocast
-
-	# https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
-	import custom_pipeline_stable_diffusion
-
 if make_test_images:
 
 	def fakeImage(i, prompt):
@@ -46,23 +36,7 @@ if make_test_images:
 		imgDraw.text((10, 25), "output " + str(i), fill=(255, 255, 255))
 		return img
 else:
-
-	model_id = "CompVis/stable-diffusion-v1-4"
-
-	scheduler = LMSDiscreteScheduler(
-	    beta_start=0.00085,
-	    beta_end=0.012,
-	    beta_schedule="scaled_linear",
-	    num_train_timesteps=1000
-	)
-
-	pipe = custom_pipeline_stable_diffusion.StableDiffusionPipeline.from_pretrained(
-	    model_id,
-	    scheduler=scheduler,
-	    revision="fp16" if use_float16 else None,
-	    torch_dtype=torch.float16 if use_float16 else torch.float32,
-	    use_auth_token=os.environ.get("HUGGINGFACE_AUTH_TOKEN"),
-	).to("cuda")
+	import generate_image
 
 # paths, server and database
 
@@ -173,7 +147,7 @@ def generate():
 
 			if make_test_images:
 				if seed == -1:
-					seed = random.randint(0, 9007199254740991)
+					seed = random.randint(0, 2**32 - 1)
 
 				for i in range(0, variations):
 					sleep(1)
@@ -191,51 +165,44 @@ def generate():
 					    }
 					).data
 			else:
-				generator = torch.Generator("cuda")
 				if seed == -1:
-					seed = generator.seed()
-				else:
-					generator = generator.manual_seed(seed)
+					seed = generate_image.generate_seed()
 
 				for i in range(0, variations):
-					with autocast("cuda"):
 
-						def yield_on_step(step):
-							return jsonify(
-							    {
-							        "percentage":
-							            (
-							                (i / variations) + (
-							                    step / inference_steps /
-							                    variations
-							                )
-							            ) * 100
-							    }
-							).data
+					# TODO: fix progress bar on step
+					# def yield_on_step(step):
+					# 	return jsonify(
+					# 	    {
+					# 	        "percentage":
+					# 	            (
+					# 	                (i / variations) +
+					# 	                (step / inference_steps / variations)
+					# 	            ) * 100
+					# 	    }
+					# 	).data
 
-						result = yield from pipe(
-						    prompt,
-						    generator=generator,
-						    num_inference_steps=inference_steps,
-						    width=width,
-						    height=height,
-						    guidance_scale=guidance_scale,  # 0 to 20, 7.5 default
-						    yield_on_step=yield_on_step,
-						    check_for_safety=False
-						)
+					image, warning = generate_image.generate_image(
+					    prompt=prompt,
+					    seed=seed + i,
+					    width=width,
+					    height=height,
+					    ddim_steps=inference_steps,
+					    cfg_scale=guidance_scale,
+					    # yield_on_step=yield_on_step
+					)
 
-						image = result["sample"][0]
-						filename = "id" + str(id) + "_v" + str(i) + ".png"
-						save_path = os.path.join(data_path, filename)
-						image.save(save_path)
-						images.append(image)
+					filename = "id" + str(id) + "_v" + str(i) + ".png"
+					save_path = os.path.join(data_path, filename)
+					image.save(save_path)
+					images.append(image)
 
-						yield jsonify(
-						    {
-						        "completed": i + 1,
-						        "percentage": ((i + 1) / variations) * 100
-						    }
-						).data
+					yield jsonify(
+					    {
+					        "completed": i + 1,
+					        "percentage": ((i + 1) / variations) * 100
+					    }
+					).data
 
 			data = {
 			    "prompt": prompt,
@@ -256,6 +223,7 @@ def generate():
 
 			# add to response
 			data["finished"] = True
+			data["warning"] = warning
 			data["id"] = id
 
 			generating = False
@@ -273,76 +241,77 @@ def generate():
 
 	return Response(generate_stream())
 
-@app.route("/api/generate/oneoff", methods=["POST"])
-def generate_oneoff():
-	global generating
-	if generating:
-		return jsonify({"error": "Busy generating another"}), 400
+# TODO: fix oneoff api after adding safety back in
+# @app.route("/api/generate/oneoff", methods=["POST"])
+# def generate_oneoff():
+# 	global generating
+# 	if generating:
+# 		return jsonify({"error": "Busy generating another"}), 400
 
-	@stream_with_context
-	def generate_oneoff_stream():
-		global generating
-		generating = True
+# 	@stream_with_context
+# 	def generate_oneoff_stream():
+# 		global generating
+# 		generating = True
 
-		variations = 3
+# 		variations = 3
 
-		try:
-			prompt = request.json["prompt"]
+# 		try:
+# 			prompt = request.json["prompt"]
 
-			images = []
-			unsafe = []
+# 			images = []
+# 			unsafe = []
 
-			if make_test_images:
+# 			if make_test_images:
 
-				for i in range(0, variations):
-					sleep(1)
+# 				for i in range(0, variations):
+# 					sleep(1)
 
-					images.append(fakeImage(i, prompt))
+# 					images.append(fakeImage(i, prompt))
 
-			else:
-				generator = torch.Generator("cuda")
-				generator.seed()
+# 			else:
+# 				generator = torch.Generator("cuda")
+# 				generator.seed()
 
-				for i in range(0, variations):
-					with autocast("cuda"):
-						result = yield from pipe(
-						    prompt,
-						    generator=generator,
-						    num_inference_steps=50,
-						    width=512,
-						    height=512,
-						    check_for_safety=True
-						)
+# 				for i in range(0, variations):
+# 					with autocast("cuda"):
+# 						result = yield from pipe(
+# 						    prompt,
+# 						    generator=generator,
+# 						    num_inference_steps=50,
+# 						    width=512,
+# 						    height=512,
+# 						    check_for_safety=True
+# 						)
 
-						images.append(result["sample"][0])
-						unsafe.append(result["nsfw_content_detected"][0])
+# 						images.append(result["sample"][0])
+# 						unsafe.append(result["nsfw_content_detected"][0])
 
-			images_as_base64 = []
+# 			images_as_base64 = []
 
-			for image in images:
-				image_io = BytesIO()
-				image.save(image_io, "PNG")
-				image_io.seek(0)
-				images_as_base64.append(
-				    "data:image/png;base64," +
-				    base64.b64encode(image_io.read()).decode("ascii")
-				)
+# 			for image in images:
+# 				image_io = BytesIO()
+# 				image.save(image_io, "PNG")
+# 				image_io.seek(0)
+# 				images_as_base64.append(
+# 				    "data:image/png;base64," +
+# 				    base64.b64encode(image_io.read()).decode("ascii")
+# 				)
 
-			data = {"images": images_as_base64, "unsafe": unsafe}
+# 			data = {"images": images_as_base64, "unsafe": unsafe}
 
-			generating = False
+# 			generating = False
 
-			yield jsonify(data).data
-		except Exception as e:
-			generating = False
-			print(repr(e))
-			yield jsonify(
-			    {
-			        "error": "Something went wrong, try again soon"
-			    }
-			).data
+# 			yield jsonify(data).data
+# 		except Exception as e:
+# 			generating = False
+# 			print(repr(e))
+# 			yield jsonify(
+# 			    {
+# 			        "error": "Something went wrong, try again soon"
+# 			    }
+# 			).data
 
-	return Response(generate_oneoff_stream())
+# 	return Response(generate_oneoff_stream())
 
 @app.route("/api/results", methods=["GET"])
 def results():

@@ -1,8 +1,12 @@
 # stable diffusion
-diffusers==0.2.4
-transformers==4.21.1 
-scipy==1.9.0
-ftfy==6.1.1
+# TODO: need to be redone
+# diffusers==0.2.4
+# transformers==4.21.1 
+# scipy==1.9.0
+# ftfy==6.1.1
+# -e git+https://github.com/hlky/k-diffusion-sd#egg=k_diffusion
+# https://huggingface.co/CompVis/stable-diffusion-v-1-4-original
+# -e git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
 # web server
 tinydb==4.7.0
 Flask==2.2.2

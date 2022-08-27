@@ -7,6 +7,7 @@ export interface Result {
 	width: number;
 	height: number;
 	// other
+	warning: string;
 	variations: number;
 	created: string;
 }

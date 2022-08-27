@@ -31,3 +31,4 @@ docker-compose.yml
 run.bat
 __pycache__
 update.sh
+*.ckpt

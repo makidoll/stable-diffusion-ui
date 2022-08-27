@@ -106,6 +106,15 @@ export default function App() {
 				if (data.finished) {
 					setResult(data);
 					refreshResults();
+
+					if (data.warning) {
+						toast({
+							title: data.warning,
+							status: "warning",
+							isClosable: true,
+							position: "top-left",
+						});
+					}
 				} else {
 					setProgress(progress => ({ ...progress, ...data }));
 				}

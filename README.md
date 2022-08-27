@@ -22,7 +22,7 @@ Really simple and intuitive interace for [Stable Diffusion](https://github.com/C
 
     `apt-get install nvidia-container-runtime`
 
--   Copy `docker-compose.example.yml` to `docker-compose.yml` and configure it with your **Hugging Face token** and **optionally enable float16** to reduce VRAM
+-   Copy `docker-compose.example.yml` to `docker-compose.yml` and make sure to link **sd-v1-4-full-ema.ckpt**
 
 -   Finally, run:
 
