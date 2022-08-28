@@ -223,19 +223,21 @@ export default function App() {
 							alignItems={"center"}
 							justifyContent={"center"}
 							h="100%"
-							pb={32}
-							// justifyContent={"flex-start"}
-							gap={2}
+							pt={8}
+							pb={64}
+							gap={8}
 						>
+							{/* TODO: move this function into image result */}
 							{getResultImageUrls(
 								loading ? progress : result,
-							).map(({ src, prompt }, i) => (
+							).map(({ src, result }, i) => (
 								<ImageResult
 									key={i}
-									prompt={prompt}
 									src={src}
+									result={result}
 									// height="41.5vh"
-									height="44vh"
+									// height="44vh"
+									height="22vw"
 									areWorkingXTo={
 										loading && areWorkingXTo
 											? areWorkingXTo[i]

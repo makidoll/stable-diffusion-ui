@@ -14,6 +14,7 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { MdDownload } from "react-icons/md";
+import { Result } from "../interfaces/Result";
 
 async function downloadFile(url: string, filename: string) {
 	// const a = document.createElement("a");
@@ -34,14 +35,20 @@ async function downloadFile(url: string, filename: string) {
 
 export default function ImageResult(props: {
 	src: string;
-	prompt: string;
+	result: Result;
 	height: string;
 	areWorkingXTo?: string;
 }) {
 	const [downloading, setDownloading] = useState(false);
 	const { isOpen, onOpen, onClose } = useDisclosure();
+
 	return (
-		<Flex w="100%" flexDirection={"column"} alignItems={"center"}>
+		<Flex
+			w="100%"
+			h={props.height}
+			flexDirection={"column"}
+			alignItems={"center"}
+		>
 			{props.src == "" ? (
 				<Box
 					h={props.height}
@@ -71,7 +78,7 @@ export default function ImageResult(props: {
 							mb="4"
 							thickness="4px"
 						/>
-						<Text textAlign="center" w="70%" opacity="0.5">
+						<Text textAlign="center" w={64} opacity="0.5">
 							The foxes, squirrels and sharks are working{" "}
 							<span style={{ fontWeight: "700" }}>
 								{props.areWorkingXTo}
@@ -96,7 +103,7 @@ export default function ImageResult(props: {
 						onClose={onClose}
 						isOpen={isOpen}
 						isCentered
-						size={"2xl"}
+						size={"4xl"}
 					>
 						<ModalOverlay />
 						<ModalContent
@@ -105,12 +112,16 @@ export default function ImageResult(props: {
 							shadow={"none"}
 						>
 							{/* <ModalCloseButton color={"white"} /> */}
-							<Center flexDirection={"column"}>
+							<Center
+								flexDirection={"column"}
+								width={"100%"}
+								height={"60vh"}
+							>
 								<Image
 									src={props.src}
-									width="100%"
-									style={{ aspectRatio: "1" }}
-									backgroundColor="rgba(0,0,0,0.05)"
+									w="100%"
+									style={{ aspectRatio: "1 / 1" }}
+									backgroundColor={"transparent"}
 									borderRadius={8}
 									objectFit={"contain"}
 								></Image>
