@@ -114,6 +114,7 @@ export default function SlimPromptInput(props: {
 								size={size}
 								borderRightRadius={showReset ? 0 : 4}
 								width={props.width ?? 200}
+								disabled={props.disabled}
 							>
 								{props.values.map((value, i) => (
 									<option key={i} value={value}>
