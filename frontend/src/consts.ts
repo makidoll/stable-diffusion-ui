@@ -7,7 +7,7 @@ const promptDefaults: Prompt = {
 	guidanceScale: 7.5,
 	width: 512,
 	height: 512,
-	sampler: Sampler.k_lms,
+	sampler: Sampler.k_euler,
 };
 
 export const Consts = {

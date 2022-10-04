@@ -347,7 +347,7 @@ def generate_image(
     cfg_scale: int = 7.5,
     yield_on_step=None,
     check_safety=False,
-    sampler: str = "k_lms"
+    sampler: str = "k_euler"
 ):
 	torch_gc()
 
