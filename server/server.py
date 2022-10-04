@@ -283,6 +283,7 @@ def generate_oneoff():
 
 			try:
 				prompt = request.json["prompt"]
+				sampler = request.json["sampler"]
 
 				images = []
 				unsafe = []
@@ -307,7 +308,7 @@ def generate_oneoff():
 						    ddim_steps=50,
 						    cfg_scale=7.5,
 						    check_safety=True,
-						    sampler="k_lms"
+						    sampler=sampler
 						)
 
 						images.append(result["image"])
