@@ -100,6 +100,7 @@ export default function SlimPromptInput(props: {
 										size={"md"}
 										width={props.width ?? 200}
 										isDisabled={props.disabled}
+										focusThumbOnChange={false}
 									>
 										<SliderTrack>
 											<SliderFilledTrack />
